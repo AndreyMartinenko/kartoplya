@@ -3,7 +3,6 @@
 return array(
     'code' => 'UGX',
     'sign' => 'USh',
-	'iso4217' => '800',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Ugandan shilling',

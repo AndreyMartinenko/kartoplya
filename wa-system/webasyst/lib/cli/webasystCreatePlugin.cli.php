@@ -70,7 +70,7 @@ HELP;
     {
         $config = array(
             'name'     => empty($params['name']) ? ucfirst($this->plugin_id) : $params['name'],
-            'img'     => 'img/'.$this->plugin_id.'.gif',
+            'icon'     => 'img/'.$this->plugin_id.'.gif',
             'version'  => ifempty($params['version'], $this->getDefaults('version')),
             'vendor'   => ifempty($params['vendor'], $this->getDefaults('vendor')),
             'handlers' => array(),//TODO optional include some demo handlers
@@ -90,10 +90,10 @@ HELP;
         );
 
         if (isset($params['db'])) {
-            array_push($paths, 'lib/models/');
+            array_push($paths, array('lib/models/'));
         }
         if (isset($params['locale'])) {
-            array_push($paths, 'locale/');
+            array_push($paths, array('locale/'));
         }
 
         if (isset($params['frontend'])) {
@@ -101,10 +101,12 @@ HELP;
 
             array_push(
                 $paths,
-                'lib/actions/frontend/',
-                'templates/actions/frontend/'
+                array(
+                    'lib/actions/frontend/',
+                    'templates/actions/frontend/',
+                )
             );
-            $paths['lib/config/routing.php'] = array($this->plugin_id.'/*' => 'frontend/');
+            $paths['lib/config/routing.php'] = array('*' => 'frontend');
 
         }
 
@@ -119,7 +121,7 @@ HELP;
             'templates/',
         );
         if (isset($params['locale'])) {
-            array_push($protected_paths, 'locale/');
+            array_push($protected_paths, array('locale/'));
         }
 
         $this->createStructure($paths);

@@ -204,25 +204,6 @@ $(function() {
             if (title) {
                 document.title = title;
             }
-        },
-        preloadAdjacentPhotos: function () {
-            var next_photo = $.photos.photo_stream_cache.getNext();
-            if (next_photo) {
-                $.photos.preloadPhoto(next_photo);
-            }
-            var prev_photo = $.photos.photo_stream_cache.getPrev();
-            if (prev_photo) {
-                $.photos.preloadPhoto(prev_photo, true);
-            }
-        },
-        getPreloadPhotoImg: function (is_prev) {
-            var id = is_prev ? 'p-preload-prev-photo' : 'p-preload-next-photo',
-                $img = $('#' + id);
-            if (!$img.length) {
-                $img = $('<img id="' + id + '" src="" data-photo-id="" style="display:none;">');
-                $img.appendTo('body');
-            }
-            return $img;
         }
     });
 
@@ -352,8 +333,12 @@ $(function() {
                     photo_tag.width(photo_container_width).height('');
                 }
 
-                $.photos.preloadAdjacentPhotos();
-
+                //preloading next photo
+                $('<img id="preload-photo" src="" data-photo-id="" style="display:none;">').appendTo('body');
+                var next_photo = $.photos.photo_stream_cache.getNext();
+                if (next_photo) {
+                    $.photos.preloadPhoto(next_photo);
+                }
             },
             slideBack: function(id) {
                 var photo = $.photos.photo_stack_cache.getById(id),
@@ -449,7 +434,11 @@ $(function() {
                             $.photos.afterLoadPhoto(r.data.photo);
                             $.photos.setTitle(r.data.photo.name);
 
-                            $.photos.preloadAdjacentPhotos();
+                            // preloading next photo
+                            var next_photo = $.photos.photo_stream_cache.getNext();
+                            if (next_photo) {
+                                $.photos.preloadPhoto(next_photo);
+                            }
                         }
                     },
                     'json'
@@ -549,7 +538,11 @@ $(function() {
                     },
                 'json');
 
-                $.photos.preloadAdjacentPhotos();
+                // preloading next photo
+                var next_photo = $.photos.photo_stream_cache.getNext();
+                if (next_photo) {
+                    $.photos.preloadPhoto(next_photo);
+                }
             },
             beforeLoadPhoto: function(photo_id) {
                 $(window).trigger('photos.changeurl', [location.href]);
@@ -750,14 +743,14 @@ $(function() {
             formFullPhotoUrl: function(photo_url) {
                 return location.href.replace(/\/[^\/]+(\/)*$/, '/' + photo_url + '/');
             },
-            preloadPhoto: function(photo, is_prev) {
-                var $img = $.photos.getPreloadPhotoImg(is_prev);
-                $img.attr('data-photo-id', '');
+            preloadPhoto: function(photo) {
+                var preload_photo_img = $('#preload-photo');
+                preload_photo_img.attr('data-photo-id', '');
                 replaceImg(
-                    $img,
+                    preload_photo_img,
                     photo.thumb_custom.url,
                     function() {
-                        $img.attr('data-photo-id', photo.id);
+                        preload_photo_img.attr('data-photo-id', photo.id);
                         if ($.Retina) {
                             $(this).retina();
                         }
@@ -765,8 +758,7 @@ $(function() {
                 );
             },
             isPhotoPreloaded: function(photo) {
-                return $.photos.getPreloadPhotoImg().attr('data-photo-id') == photo.id ||
-                        $.photos.getPreloadPhotoImg(true).attr('data-photo-id') == photo.id;
+                return $('#preload-photo').attr('data-photo-id') == photo.id;
             },
             renderPhotoImg: function(photo) {
                 replaceImg(

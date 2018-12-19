@@ -75,13 +75,10 @@ class waGettextParser
         } elseif (strpos($this->config['project'], 'wa-plugins') !== false) {
             $function_pattern[] = '_wp';
             $function_pattern[] = '->_w';
-            $function_pattern[] = 'sprintf_wp';
         } elseif (strpos($this->config['project'], '/plugins/')) {
             $function_pattern[] = '_wp';
-            $function_pattern[] = 'sprintf_wp';
         } elseif (strpos($this->config['project'], '/widgets/')) {
             $function_pattern[] = '_wp';
-            $function_pattern[] = 'sprintf_wp';
         } else {
             $function_pattern[] = '_w';
             $function_pattern[] = 'sprintf_wp';
@@ -199,7 +196,7 @@ class waGettextParser
                         }
 
                         if ($counter) {
-                            echo "\r\n{$counter} string(s) out of date for {$locale} at {$domain}\r\n";
+                            echo "\r\n{$counter} string(s) is out of date for {$locale} at {$domain}\r\n";
                         }
                         if ($words) {
                             fputs($fh, "\n\n#Missed:\n\n\n");
@@ -211,7 +208,7 @@ class waGettextParser
                                 fputs($fh, "msgid \"".str_replace('"', '\\"', $msg_id)."\"\n");
                             }
                             $counter = count($words);
-                            echo "\r\n{$counter} string(s) missing or not translated for {$locale} at {$domain}\r\n";
+                            echo "\r\n{$counter} string(s) is missed or not translated for {$locale} at {$domain}\r\n";
                         }
 
                         fflush($fh);
@@ -219,10 +216,10 @@ class waGettextParser
                         fclose($fh);
 
                     } else {
-                        echo "\r\nError while opening {$locale_path} in a+ mode\r\n";
+                        echo "\r\nError while open {$locale_path} in a+ mode\r\n";
                     }
                 } else {
-                    echo "\r\nMissing locale file {$locale_path}\r\n";
+                    echo "\r\nLocale file {$locale_path} is missed\r\n";
                 }
             } else {
 
@@ -242,12 +239,12 @@ class waGettextParser
                     }
                     flock($fh, LOCK_EX);
                     foreach ($this->words as $msg_id => $info) {
-                        // Looking for current phrase matches
+                        // Ищем вхождения текущей фразы
                         if (isset($strings[$msg_id])) {
                             ++$exists_counter;
                             continue;
                         }
-                        // If not found, save
+                        // Если не нашли - записываем
                         foreach ((array)$info['lines'] as $line) {
                             fputs($fh, "\n#: ".$line);
                         }
@@ -267,15 +264,15 @@ class waGettextParser
                     flock($fh, LOCK_UN);
                     fclose($fh);
                 } else {
-                    echo "\r\nError while opening {$locale_path} in a+ mode\r\n";
+                    echo "\r\nError while open {$locale_path} in a+ mode\r\n";
                 }
 
                 if ($counter) {
                     echo "\r\nAdded {$counter} string(s) for locale {$locale} at {$domain}\r\n";
                 } elseif ($exists_counter) {
-                    echo "\r\nExisting {$exists_counter} string(s) for locale {$locale} at {$domain}\r\n";
+                    echo "\r\nAlready exists {$exists_counter} string(s) for locale {$locale} at {$domain}\r\n";
                 } else {
-                    echo "\r\nNo strings found for locale {$locale} at {$domain}\r\n";
+                    echo "\r\nThere no strings founded for locale {$locale} at {$domain}\r\n";
                 }
             }
         }
@@ -317,7 +314,7 @@ TEXT;
         $locale_file = $locale_path."/".$this->config['locales'][$locale].".po";
         $f = fopen($locale_file, "w+");
         if (!$f) {
-            throw new waException("Could not create locale: ".$locale_file);
+            throw new Exception("Could not create locale: ".$locale_file);
         }
         fwrite($f, $text);
         fclose($f);

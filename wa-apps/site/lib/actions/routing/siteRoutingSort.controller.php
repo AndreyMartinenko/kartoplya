@@ -9,28 +9,26 @@ class siteRoutingSortController extends waJsonController
         $domain = siteHelper::getDomain();
 
         $route = waRequest::post('route');
-        $offset = waRequest::post('pos');
-
+        $pos = waRequest::post('pos');
+        $result = array();
+        $i = 0;
         $routes = wa()->getRouting()->getRoutes($domain);
-        $sortable = ifset($routes,$route, array());
-
-        if ($sortable) {
-            //Delete sortable for routes.
-            unset($routes[$route]);
-
-           //Take the non-sortable part, add the desired element and add the remaining
-            $result = array_slice($routes, 0, $offset, true)
-                + array($route => $sortable)
-                + array_slice($routes, $offset, NULL, true);
-
-            $all_routes[$domain] = $result;
-            waUtils::varExportToFile($all_routes, $path);
+        $apps = wa()->getApps();
+        foreach ($routes as $k => $v) {
+            if ($pos == $i) {
+                $result[$route] = $routes[$route];
+            }
+            if ($route != $k) {
+                if ((isset($v['app']) && isset($apps[$v['app']]))|| isset($v['redirect'])) {
+                    $i++;
+                }
+                $result[$k] = $v;
+            }
         }
-
-        //Delete cache problem domains
-        $cache_domain = new waVarExportCache('problem_domains', 3600, 'site/settings/');
-        $cache_domain->delete();
-
-        $this->response['routing_errors'] = siteHelper::getRoutingErrorsInfo();
+        if ($pos == $i) {
+            $result[$route] = $routes[$route];
+        }        
+        $all_routes[$domain] = $result;
+        waUtils::varExportToFile($all_routes, $path);
     }
 }

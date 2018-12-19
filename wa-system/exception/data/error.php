@@ -5,7 +5,6 @@
  * @var string $backend_url
  * @var array $app
  * @var array $url
- * @var array $message
  */
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
@@ -38,13 +37,13 @@
                             <?php if ($env == 'backend') {?></a><?php }?>
                         <?php }?>
                         </p>
-                        <h2><?php echo $message; ?></h2>
+                        <h2><?php echo htmlspecialchars($message, ENT_NOQUOTES, 'utf-8');?></h2>
                         <p>
-                        <?php if ($app) {
-                            echo _ws('Please contact app developer.');
-                        } else {
-                            echo _ws('Please contact server administrator.');
-                        }?>
+                        <?php if ($app) {?>
+                        Please contact app developer.
+                        <?php } else {?>
+                        Please contact server administrator.
+                        <?php }?>
                         </p>
                     </div>
                 </div>

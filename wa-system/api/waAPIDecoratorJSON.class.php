@@ -8,14 +8,18 @@ class waAPIDecoratorJSON extends waAPIDecorator
         if (is_array($response)) {
             $response = $this->parseArray($response);
         }
-        return waUtils::jsonEncode($response);
+        if (waSystemConfig::isDebug() && (version_compare(PHP_VERSION, '5.4.0') >= 0)) {
+            return json_encode($response, JSON_PRETTY_PRINT);
+        } else {
+            return json_encode($response);
+        }
     }
 
     /**
-     * Iterate through all arrays in response.
-     * If an array like array('uid' => array(111,222)) is found,
-     * replace it with array(111,222),
-     * because array('uid' => ...) is a wrapper for XML structuring.
+     * Проходим все массивы в ответе и если находим массив
+     * вида array('uid' => array(111,222)) заменяем его на
+     * array(111,222), т.к. array('uid' => ...) это
+     * обертка для структурирования хмл.
      * @param array $arr
      * @return array
      */

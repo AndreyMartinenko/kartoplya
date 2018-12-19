@@ -12,31 +12,6 @@ class webasystConfig extends waAppConfig
         return $this->getRootPath()."/wa-widgets/".$widget_id;
     }
 
-    public function getLogActions($full = false, $ignore_system = false)
-    {
-        $result = array(
-            'contact_edit' => array(
-                'name' => _ws('edited contact')
-            ),
-        );
-        if (!$ignore_system) {
-            $result = array_merge($result, $this->getSystemLogActions());
-        }
-        return $result;
-    }
-
-    public function onCount()
-    {
-        wa('webasyst');
-        webasystHelper::backgroundClearCache();
-
-        $n = array(
-            //'settings' => 1,
-        );
-
-        return $n;
-    }
-
     public function initUserWidgets($force = false, waContact $contact = null)
     {
         if (!$contact) {
@@ -140,11 +115,6 @@ class webasystConfig extends waAppConfig
             }
         }
         return array();
-    }
-
-    public function throwFrontControllerDispatchException()
-    {
-        //
     }
 }
 

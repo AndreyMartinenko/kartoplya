@@ -1,0 +1,281 @@
+<link rel="stylesheet" href="{$wa_theme_url}style.css">
+{if $settings['lazyloading'] == 1}
+    <script type="text/javascript" src="{$wa_app_static_url}js/jquery.jscroll.min.js"></script>
+{/if}
+{if $settings['google_captcha'] == 1}
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+{/if}
+<div id="easyreviews">
+{if $success == 1}
+    <h1>[s`Thank you!`]</h1>
+    <p>[s`Your message has been sent.`] {if $settings['validation'] == 1}[`It will be added after moderation.`]{/if}</p>
+{else}
+    <div class="wa-form">
+      <form method="post" action="">
+        {if $settings['auth_only'] == 1}
+          <!-- Только зарег. пользователи -->
+          {if $wa->isAuthEnabled()}
+            {if $wa->user()->isAuth()}
+              <!-- Пользователь зарег -->
+              <div class="wa-field">
+                <div class="wa-name">[s`Message`]:</div>
+                  <div class="wa-value">
+                    <textarea {if !empty($errors.body)} class="wa-error" {/if} name="body">{$wa->post("body")|escape}</textarea>
+                    {if !empty($errors.body)}<em class="wa-error-msg">[`Invalid Message`]</em>{/if}
+                  </div>
+              </div>
+              {if $settings['show_captcha'] == 1}
+                {if $settings['google_captcha'] != 1}
+                <div class="wa-field">
+                  <div class="wa-value">
+                    {$wa->captcha(!empty($errors.captcha))}
+                    {if !empty($errors.captcha)}<em class="wa-error-msg">[`Invalid CAPTCHA`]</em>{/if}
+                  </div>
+                </div>
+                {else}
+                  <div class="wa-field">
+                    <div class="wa-value">
+                      <div class="g-recaptcha" data-sitekey="{$settings['site_key']}"></div>
+                      {if !empty($errors.captcha)}<em class="wa-error-msg">[`Invalid CAPTCHA`]</em>{/if}
+                    </div>
+                  </div>
+                {/if}
+              {/if}
+              <div class="wa-field">
+                <div class="wa-value wa-submit">
+                  <input type="hidden" name="url" value="{$wa->domainUrl()}{$wa->currentUrl()}">
+                  <input type="submit" value="[s`Send`]" name="send">
+                </div>
+              </div>
+            {else}
+              <!-- Пользователь не зарег. или не авторизован -->
+              <p>
+                [`Only registered users can write reviews.`]
+                <a href="{$wa->loginUrl()}" class="not-visited">[`Log in`]</a>
+                <a href="{$wa->signupUrl()}" class="not-visited">[`Sign up`]</a>
+              </p>
+            {/if}
+          {else}
+            <!-- Рег. выключена -->
+            <p>[`You can enable logging for user settings of the framework, or enable the ability to leave messages for registered users.`]</p>
+          {/if}
+        {else}
+          <!-- Для всех пользователей-->
+          <!-- Рег. включена -->
+          {if $wa->isAuthEnabled()}
+            {if $wa->user()->isAuth()}
+              <!-- Пользователь зарег -->
+              <div class="wa-field">
+                <div class="wa-name">[s`Message`]:</div>
+                  <div class="wa-value">
+                    <textarea {if !empty($errors.body)} class="wa-error" {/if} name="body">{$wa->post("body")|escape}</textarea>
+                    {if !empty($errors.body)}<em class="wa-error-msg">[`Invalid Message`]</em>{/if}
+                  </div>
+              </div>
+              {if $settings['show_captcha'] == 1}
+                {if $settings['google_captcha'] != 1}
+                <div class="wa-field">
+                  <div class="wa-value">
+                    {$wa->captcha(!empty($errors.captcha))}
+                    {if !empty($errors.captcha)}<em class="wa-error-msg">[`Invalid CAPTCHA`]</em>{/if}
+                  </div>
+                </div>
+                {else}
+                  <div class="wa-field">
+                    <div class="wa-value">
+                      <div class="g-recaptcha" data-sitekey="{$settings['site_key']}"></div>
+                      {if !empty($errors.captcha)}<em class="wa-error-msg">[`Invalid CAPTCHA`]</em>{/if}
+                    </div>
+                  </div>
+                {/if}
+              {/if}
+              <div class="wa-field">
+                <div class="wa-value wa-submit">
+                  <input type="hidden" name="url" value="{$wa->domainUrl()}{$wa->currentUrl()}">
+                  <input type="submit" value="[s`Send`]" name="send">
+                </div>
+              </div>
+            {else}
+              <!-- Пользователь не авторизован -->
+              <p>
+                [`You are not authorized! If You have already registered please log in to send messages from your account!`]
+                <a href="{$wa->loginUrl()}" class="not-visited">[s`Log in`]</a>
+                <a href="{$wa->signupUrl()}" class="not-visited">[s`Sign up`]</a>
+              </p>
+              <div class="wa-field">
+                <div class="wa-name">[s`Name`]:</div>
+                <div class="wa-value">
+                  <input name="name" type="text" {if !empty($errors.name)} class="wa-error" {/if} value="{$wa->post("name")|escape}">
+                  {if !empty($errors.name)}<em class="wa-error-msg">[`Invalid Name`]</em>{/if}
+                </div>
+              </div>
+              {if $settings['require_email'] == 1}
+              <div class="wa-field">
+                <div class="wa-name">[s`Email`]:</div>
+                <div class="wa-value">
+                  <input {if !empty($errors.email)}class="wa-error"{/if} name="email" type="email" value="{$wa->post("email")|escape}" >
+                  {if !empty($errors.email)}<em class="wa-error-msg">[`Invalid Email`]</em>{/if}
+                </div>
+              </div>
+              {/if}
+              <div class="wa-field">
+                <div class="wa-name">[s`Message`]:</div>
+                <div class="wa-value">
+                  <textarea {if !empty($errors.body)} class="wa-error" {/if} name="body">{$wa->post("body")|escape}</textarea>
+                  {if !empty($errors.body)}<em class="wa-error-msg">[`Invalid Message`]</em>{/if}
+                </div>
+              </div>
+              {if $settings['show_captcha'] == 1}
+                {if $settings['google_captcha'] != 1}
+                <div class="wa-field">
+                  <div class="wa-value">
+                    {$wa->captcha(!empty($errors.captcha))}
+                    {if !empty($errors.captcha)}<em class="wa-error-msg">[`Invalid CAPTCHA`]</em>{/if}
+                  </div>
+                </div>
+                {else}
+                  <div class="wa-field">
+                    <div class="wa-value">
+                      <div class="g-recaptcha" data-sitekey="{$settings['site_key']}"></div>
+                      {if !empty($errors.captcha)}<em class="wa-error-msg">[`Invalid CAPTCHA`]</em>{/if}
+                    </div>
+                  </div>
+                {/if}
+              {/if}
+              <div class="wa-field">
+                <div class="wa-value wa-submit">
+                  <input type="hidden" name="url" value="{$wa->domainUrl()}{$wa->currentUrl()}">
+                  <input type="submit" value="[s`Send`]" name="send">
+                </div>
+              </div>
+            {/if}
+          {else}
+            <!-- Рег. выключена -->
+            <div class="wa-field">
+              <div class="wa-name">[s`Name`]:</div>
+              <div class="wa-value">
+                <input name="name" type="text" {if !empty($errors.name)} class="wa-error" {/if} value="{$wa->post("name")|escape}">
+                {if !empty($errors.name)}<em class="wa-error-msg">[`Invalid Name`]</em>{/if}
+              </div>
+            </div>
+            {if $settings['require_email'] == 1}
+            <div class="wa-field">
+              <div class="wa-name">[s`Email`]:</div>
+              <div class="wa-value">
+                <input {if !empty($errors.email)}class="wa-error"{/if} name="email" type="email" value="{$wa->post("email")|escape}" >
+                {if !empty($errors.email)}<em class="wa-error-msg">[`Invalid Email`]</em>{/if}
+              </div>
+            </div>
+            {/if}
+            <div class="wa-field">
+              <div class="wa-name">[s`Message`]:</div>
+              <div class="wa-value">
+                <textarea {if !empty($errors.body)} class="wa-error" {/if} name="body">{$wa->post("body")|escape}</textarea>
+                {if !empty($errors.body)}<em class="wa-error-msg">[`Invalid Message`]</em>{/if}
+              </div>
+            </div>
+            {if $settings['show_captcha'] == 1}
+              {if $settings['google_captcha'] != 1}
+              <div class="wa-field">
+                <div class="wa-value">
+                  {$wa->captcha(!empty($errors.captcha))}
+                  {if !empty($errors.captcha)}<em class="wa-error-msg">[`Invalid CAPTCHA`]</em>{/if}
+                </div>
+              </div>
+              {else}
+                <div class="wa-field">
+                  <div class="wa-value">
+                    <div class="g-recaptcha" data-sitekey="{$settings['site_key']}"></div>
+                    {if !empty($errors.captcha)}<em class="wa-error-msg">[`Invalid CAPTCHA`]</em>{/if}
+                  </div>
+                </div>
+              {/if}
+            {/if}
+            <div class="wa-field">
+                <div class="wa-value wa-submit">
+                  <input type="hidden" name="url" value="{$wa->domainUrl()}{$wa->currentUrl()}">
+                  <input type="submit" value="[s`Send`]" name="send">
+                </div>
+            </div>
+          {/if}
+        {/if}
+      </form>
+    </div>
+{/if}
+
+
+<div class="clear-both"></div>
+
+{if waRequest::get('page', 1) == 1}
+  {$page = 1}
+{else}
+  {$page = waRequest::get('page')}
+{/if}
+
+{if empty($records)}
+<p>[`There are still no reviews. You can be the first!`]</p>
+{else}
+  {foreach $records as $r}
+  {if $r@iteration >= $page * $settings['pagination'] - $settings['pagination'] + 1 && $r@iteration < $page * $settings['pagination'] + 1}
+    {if $r.moderated != 0}
+    <div class="post">
+      {if $settings['avatar'] == 1}
+        <div class="avatar-block">
+            {if $r.photo}
+                <img class="avatar" src="{$wa_static_url}wa-data/public/easyreviews/{$r.id}/{$r.photo}">
+            {else}
+                <img class="avatar" src="{$r.photo_url}">
+            {/if}
+        </div>
+      {/if}
+      <div class="review-body">
+        <p><span class="name">{$r.name}</span><span class="datetime">{$r.datetime|wa_date:'humandatetime'}</span></p>
+        <p>{$r.body|escape|nl2br}</p>
+      </div>
+      {if $r.answer == 1}
+        {foreach $answers as $a}
+            {if $a.review_id == $r.id}
+                {assign var="answer" value=$a}
+            {/if}
+        {/foreach}
+        <div class="answer">
+            {if $settings['avatar'] == 1}
+              <div class="avatar-block">
+                <img class="avatar" src="{$answer.photo_url}">
+              </div>
+            {/if}
+            <div class="answer-body">
+                <p><span class="name">{$answer.name|escape}</span><span class="datetime">{$answer.datetime|wa_date:'humandatetime'}</span></p>
+                <p>{$answer.body|escape|nl2br}</p>
+            </div>
+        </div>
+      {/if}
+      {if $settings['lazyloading'] == 1 && $pages > 1}
+        <div style="display: none;">
+            {wa_pagination total={$pages} page={$page} prev="«" next="»" nb=3 attrs=['class' => 'pagination', 'id' => 'easyreviews-paging']}
+        </div>
+        <div class="clear-both"></div>
+      {/if}
+      </div>
+    <div class="clear-both"></div>
+    {/if}
+  {/if}
+  {/foreach}
+
+  {if $settings['lazyloading'] == 0}
+    {wa_pagination total={$pages} page={$page} prev="«" next="»" nb=3 attrs=['class' => 'pagination', 'id' => 'easyreviews-paging']}
+  {/if}
+
+{/if}
+</div>
+
+{if $settings['lazyloading'] == 1 && $pages > 1}
+<script>
+    $('#easyreviews').jscroll({
+        loadingHtml: '<img src="{$wa_static_url}wa-content/img/loading16.gif" alt="[s`Loading`]" /> [s`Loading`]',
+        padding: 20,
+        nextSelector: '#easyreviews-paging li.selected + li a',
+        contentSelector: '.post'
+    });
+</script>
+{/if}

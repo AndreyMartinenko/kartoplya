@@ -1,0 +1,59 @@
+<link rel="stylesheet" href="{{$wa_app_static_url}}css/jquery.datetimepicker.css">
+<script type="text/javascript" src="{{$wa_app_static_url}}js/jquery.datetimepicker.js"></script>
+<script>
+  $(document).ready(function() {
+  $('#datetimepicker').datetimepicker({
+   lang:'ru',
+   format:'Y-m-d H:i:s'
+  });
+  });
+</script>
+
+{literal}
+<style>
+  .wa-form { float: left; margin: 10px 0; overflow: visible; }
+  .wa-form .wa-field { clear: left; margin: 0; padding-top: 3px; }
+  .wa-form .wa-field .wa-name { float: left; width: 155px; padding-top: 0.05em; padding-bottom: 10px; font-size: 0.95em; }
+  .wa-form .wa-field .wa-value { margin-left: 180px; margin-bottom: 5px; position: relative; }
+  .wa-form .wa-field .wa-value.wa-submit { margin-top: 0px; }
+  .wa-form .wa-field .wa-value input[type="text"], .wa-form .wa-field .wa-value input[type="email"], .wa-form .wa-field .wa-value input[type="password"] { width: 30%; min-width: 200px; margin: 0; }
+  .wa-form .wa-field .wa-value textarea { min-width: 300px; height: 70px; }
+  input, textarea { font-size: 1em; color: black; font-family: "Georgia", Times, serif; }
+  .wa-form .wa-captcha { padding: 7px 0 10px; }
+  .wa-form .wa-captcha p { clear: left; margin: 0; }
+  .wa-captcha img { float: left; margin-right: 5px; margin-top: -8px; }
+  .wa-captcha .wa-captcha-refresh { color: #AAAAAA; font-size: 0.8em; text-decoration: underline; }
+  .wa-error {border: 2px solid red;}
+  .wa-error-msg {
+    font-size: 0.9em;
+    color: red;
+  }
+</style>
+{/literal}
+
+<div class="block">
+  <div class="wa-form">
+    <form method="post" action="">
+      <div class="wa-field">
+        <div class="wa-name">[s`Message`]:</div>
+        <div class="wa-value">
+            <textarea {if !empty($errors.body)} class="wa-error" {/if} name="body">{$wa->post("body")|escape}</textarea>
+            {if !empty($errors.body)}<em class="wa-error-msg">[`Invalid Message`]</em>{/if}
+        </div>
+      </div>
+      <div class="wa-field">
+        <div class="wa-name">[`Date of publication`]:</div>
+        <div class="wa-value">
+            <input id="datetimepicker" name="datetime" type="text" {if !empty($errors.datetime)} class="wa-error" {/if} value="{$wa->post("datetime")|escape}"/>
+            <p class="hint">Формат даты: гггг-мм-дд чч:мм:сс</p>
+            {if !empty($errors.datetime)}<em class="wa-error-msg">[`Invalid Datetime`]</em>{/if}
+        </div>
+      </div>
+      <div class="wa-field">
+        <div class="wa-value wa-submit">
+          <input type="submit" class="button green" value="[s`Save`]">
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

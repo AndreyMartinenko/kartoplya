@@ -22,9 +22,10 @@ abstract class waActions extends waController
     {
         $method = $action.'Action';
         if (method_exists($this, $method)) {
+            $this->action = $action;
             $this->$method();
-        } else {
-            throw new waException(sprintf("Invalid action or missed method %s at %s for action %s", $method, get_class($this), $action));
+        } else{
+            throw new waException(sprintf("Invalid action or missed method at %s for action %s",get_class($this), $action));
         }
     }
 
@@ -33,15 +34,15 @@ abstract class waActions extends waController
 
     }
 
+
     public function run($params = null)
     {
         $action = $params;
         if (!$action) {
             $action = 'default';
         }
-        $this->action = $action;
         $this->preExecute();
-        $this->execute($this->action);
+        $this->execute($action);
         $this->postExecute();
     }
 
@@ -56,18 +57,9 @@ abstract class waActions extends waController
 
         if (strpbrk($template, '/:') === false) {
             $match = array();
-            if (!preg_match("/^[a-z]+([A-Z][a-z]+Plugin)?([A-Z][^A-Z]+)([A-Za-z]*)Actions$/", get_class($this), $match)) {
-                throw new Exception('bad class name for waActions class');
-            }
-            $template = $this->getPluginRoot().'templates/actions/'.strtolower($match[2])."/".$match[2].$match[3].$template.$this->getView()->getPostfix();
-            if ($this->getPluginRoot() && !file_exists(wa()->getAppPath($template))) {
-                $match = array();
-                preg_match("/[A-Z][^A-Z]+/", get_class($this), $match);
-                $template2 = $this->getPluginRoot().'templates/actions/'.strtolower($match[0])."/".$match[0].ucfirst($this->action).$this->getView()->getPostfix();
-                if (file_exists(wa()->getAppPath($template2))) {
-                    return $template2;
-                }
-            }
+            preg_match("/[A-Z][^A-Z]+/", get_class($this), $match);
+            $template = $this->getPluginRoot().'templates/actions/'.
+                strtolower($match[0])."/".$match[0].$template.$this->getView()->getPostfix();
         }
 
         return $template;
@@ -107,9 +99,9 @@ abstract class waActions extends waController
         }
         $this->getResponse()->sendHeaders();
         if (!$errors) {
-            echo waUtils::jsonEncode(array('status' => 'ok', 'data' => $data));
+            echo json_encode(array('status' => 'ok', 'data' => $data));
         } else {
-            echo waUtils::jsonEncode(array('status' => 'fail', 'errors' => $errors, 'data' => $data));
+            echo json_encode(array('status' => 'fail', 'errors' => $errors, 'data' => $data));
         }
     }
 }

@@ -3,7 +3,6 @@
 return array(
     'code' => 'BMD',
     'sign' => '$',
-	'iso4217' => '60',
     'sign_position' => 0,
     'sign_delim' => '',
     'title' => 'Bermudian dollar',

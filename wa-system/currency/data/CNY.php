@@ -3,7 +3,6 @@
 return array(
     'code' => 'CNY',
     'sign' => '¥',
-	'iso4217' => '156',
     'sign_position' => 0,
     'sign_delim' => '',
     'title' => 'Renminbi',

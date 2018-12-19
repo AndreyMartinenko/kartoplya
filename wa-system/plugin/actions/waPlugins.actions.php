@@ -9,14 +9,10 @@ class waPluginsActions extends waActions
     public function defaultAction()
     {
         $template = $this->getTemplatePath();
-
-        $installer_available = wa()->appExists('installer') && $this->getUser()->getRights('installer', 'backend');
-        $installer_available = $installer_available && is_readable(wa()->getConfig()->getRootPath().'/wa-installer/lib/config/sources.php');
-
         $this->display(array(
             'plugins_hash' => $this->plugins_hash,
             'plugins'      => $this->getConfig()->getPlugins(),
-            'installer'    => $installer_available,
+            'installer'    => $this->getUser()->getRights('installer', 'backend'),
             'is_ajax'      => $this->is_ajax,
             'shadowed'     => $this->shadowed,
         ), $template);

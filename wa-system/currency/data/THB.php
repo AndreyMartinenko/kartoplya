@@ -3,7 +3,6 @@
 return array(
     'code' => 'THB',
     'sign' => '฿',
-	'iso4217' => '764',
     'sign_position' => 0,
     'sign_delim' => '',
     'title' => 'Thai baht',

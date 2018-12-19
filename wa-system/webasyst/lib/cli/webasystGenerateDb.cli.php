@@ -56,7 +56,7 @@ class webasystGenerateDbCli extends waCliController
     private function printHelp()
     {
         if (preg_match('/^webasyst(\w+)Cli$/', __CLASS__, $matches)) {
-            $callback = wa_lambda('$m', 'return strtolower($m[1]);');
+            $callback = create_function('$m', 'return strtolower($m[1]);');
             $action = preg_replace_callback('/^([\w]{1})/', $callback, $matches[1]);
         } else {
             $action = '';
@@ -343,6 +343,7 @@ HELP;
 
     private function getPlugins($app_id)
     {
+        $plugins = array();
         if (SystemConfig::isDebug()) {
             $plugins = waFiles::listdir(wa()->getConfig()->getAppsPath($app_id, 'plugins/'));
             foreach ($plugins as $_id => $_plugin_id) {
@@ -382,7 +383,8 @@ HELP;
         $format .= "\n";
 
         if ($data) {
-            $print = vsprintf($format, $data);
+            array_unshift($data, $format);
+            $print = call_user_func_array('sprintf', $data);
         } else {
             $print = preg_replace_callback('@%\-?(\d*)s@', array($this, 'lineCallback'), $format);
         }

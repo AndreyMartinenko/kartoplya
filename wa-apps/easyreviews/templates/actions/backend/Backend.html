@@ -1,0 +1,78 @@
+{literal}
+<style>
+.name {font-size: 12pt; font-weight: bold;}
+.avatar {border-radius: 50%; width: 128px;}
+table.zebra a.icon {display: inline;}
+</style>
+{/literal}
+
+<div class="block double-padded">
+  {if $settings.routing_exist == 0}
+    <p><i class="icon16 exclamation"></i>[`To app works correctly you must create routing for present domain.`] <span class="hint">[`Read more about Easyreviews setting`] <a target="_blank" href="https://www.webasyst.ru/store/app/easyreviews/help/">[`here`]</a>.</span></p>
+  {/if}
+  {if !$records}
+    <h2>{literal}[`Place the code {$wa->easyreviews->show()} on any page of the website to add her comments.`]{/literal}</h2>
+  {else}
+    <table class="zebra single-lined">
+    <tbody>
+    <tr>
+        <th>[`Name`]</th>
+        <th>[`Email`]</th>
+        <th>[`Date of publication`]</th>
+        <th>[`Message`]</th>
+        <th>Телефон</th>
+        <th>[`Answer`]</th>
+        <th>[`Status`]</th>
+        <th>[`Actions`]</th>
+    </tr>
+    {foreach from=$records item=r}
+    <tr style="color:#454545;">
+        <td class="min-width">
+            {if $r.contact_id != 0 && $wa->user()->isAdmin('contacts')}
+              <a href="{$wa_backend_url}contacts/#/contact/{$r.contact_id}/"><span class="name">{$r.name|truncate:15|escape}</span></a>
+            {else}
+              <span class="name">{$r.name|truncate:15|escape}</span>
+            {/if}
+        </td>
+        <td style="color: rgb(141, 136, 136);">{$r.email}</td>
+        <td><div style="color: rgb(141, 136, 136);">{$r.datetime|wa_date:'humandatetime'}</div></td>
+        <td style="color: blue;">{$r.body|truncate:50|escape|nl2br}</td>
+        <td>
+            {if $r.photo}
+                {$r.photo}
+            {else}
+                Нет телефона
+            {/if}
+        </td>
+        <td>
+        {if $r.answer == 0}
+            <span>На этот отзыв нет ответа</span>
+            <a class="icon" href="?action=answeradd&id={$r.id}" title="Ответить"><i class="icon16 plus"></i></a>
+        {else}
+            {foreach $answers as $a}
+                {if $a.review_id == $r.id}
+                    <span>{$a.name}:</span>
+                    <span>{$a.body}</span>
+                    <a class="icon" href="?action=answeredit&id={$a.id}" title="Редактировать"><i class="icon16 edit"></i></a>
+                    <a class="icon" href="?action=answerdelete&id={$a.review_id}&answerid={$a.id}" title="Удалить"><i class="icon16 trash"></i></a>
+                {/if}
+            {/foreach}
+        {/if}
+        </td>
+        <td>
+           {if $r.moderated == 0}
+               <span style="color: red;">[`Not published`]</span>
+           {else}
+               <span style="color: green;">[`Published`]</span>
+           {/if}
+        </td>
+        <td style="min-width: 70px;">
+            <a class="icon" href="?action=validation&id={$r.id}" title="Модерация"><i class="icon16 {if $r.moderated == 0}minus{else}yes{/if}"></i></a>
+            <a class="icon" href="?action=edit&id={$r.id}" title="Редактировать"><i class="icon16 edit"></i></a>
+            <a class="icon" href="?action=delete&id={$r.id}" title="Удалить"><i class="icon16 trash"></i></a>
+        </td>
+    </tr>
+    {/foreach}
+    </tbody></table>
+  {/if}
+</div>

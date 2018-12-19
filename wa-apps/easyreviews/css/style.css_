@@ -1,0 +1,70 @@
+.easyreviews .wa-error {border: 2px solid red;}
+.easyreviews .name {font-size: 14pt; font-weight: bold;}
+.easyreviews .datetime {padding-left: 10px; color: #aaa;}
+.easyreviews .avatar-block {
+  float: left;
+  display: block;
+  padding-bottom: 20px;
+  padding-right: 10px;
+}
+.easyreviews .avatar {border-radius: 50%;}
+.easyreviews .review-body {padding-top: 10px;}
+.easyreviews .answer {padding-top: 10px;}
+
+.easyreviews .wa-auth-adapters ul { padding: 0; min-height: 16px; }
+.easyreviews .wa-auth-adapters ul li { list-style: none; float: left; padding: 0 15px 0 0; }
+.easyreviews .wa-auth-adapters ul li a { display: block; padding: 0px 5px; }
+.easyreviews .wa-auth-adapters ul li a img { position: relative; top: 4px; margin-right: 3px; }
+.easyreviews .wa-auth-adapters p { color: #888; font-size: 0.9em; width: 40%; }
+
+.easyreviews .wa-form { float: left; margin: 10px 0; overflow: visible; }
+.easyreviews .wa-form .wa-field { clear: left; margin: 0; padding-top: 3px; }
+.easyreviews .wa-form .wa-field .wa-name { float: left; width: 155px; padding-top: 0.05em; padding-bottom: 10px; font-size: 0.95em; color: #888; }
+.easyreviews .wa-form .wa-field.wa-separator { height: 10px; }
+.easyreviews .wa-form .wa-field .wa-value { margin-left: 180px; margin-bottom: 5px; position: relative; }
+.easyreviews .wa-form .wa-field .wa-value input.wa-error { border: 2px solid red; }
+.easyreviews .wa-form .wa-field .wa-value .wa-error-msg { font-size: 0.9em; color: red; display: block; }
+.easyreviews .wa-form .wa-field .wa-value input[type="text"],
+.easyreviews .wa-form .wa-field .wa-value input[type="email"],
+.easyreviews .wa-form .wa-field .wa-value input[type="password"] { width: 30%; min-width: 260px;  margin:0;}
+.easyreviews .wa-form .wa-field .wa-value textarea { min-width: 300px; height: 70px; }
+.easyreviews .wa-form .wa-field .wa-value input.wa-captcha-input { width: 100px; min-width: 0; }
+.easyreviews .wa-form .wa-field .wa-value label { display: block; }
+.easyreviews .wa-form .wa-field .wa-value .wa-captcha img { margin-left: 0; }
+.easyreviews .wa-form .wa-field .wa-value .errormsg { margin-left: 0; }
+.easyreviews .wa-form .wa-field .wa-value.wa-submit { margin-top: 10px; }
+.easyreviews .wa-form .wa-field .wa-value p label { display: block; margin: 0; }
+.easyreviews .wa-form .wa-field .wa-value p { line-height: 1.6em; margin-bottom: 23px; position: relative; } 
+.easyreviews .wa-form .wa-field .wa-value p span { color: #777; font-size: 0.9em; display: block; }
+.easyreviews .wa-form .wa-field .wa-value p i.icon16 { float: left; left: -20px; margin-top: 2px; position: absolute; }
+.easyreviews .wa-form .wa-field .wa-value p input { display: block; margin-bottom: 2px; }
+.easyreviews .wa-form .wa-field .wa-value p input[type="radio"],
+.easyreviews .wa-form .wa-field .wa-value p input[type="checkbox"] { display: inline; }
+.easyreviews .wa-form .wa-field .wa-value p .field.wa-required span:after { content: " *"; color: #faa; }
+.easyreviews .wa-form .wa-field.wa-required .wa-name:after { content: " *"; color: #faa; }
+
+.easyreviews .wa-captcha { padding: 7px 0 10px; }
+.easyreviews .wa-captcha p { margin: 0; }
+.easyreviews .wa-captcha strong { font-size: 1.2em; }
+.easyreviews .wa-captcha p img { float: left !important; margin-right: 5px; margin-top: -8px; }
+.easyreviews .wa-captcha .wa-captcha-refresh { font-size: 0.8em; text-decoration: underline; color: #aaa; }
+.easyreviews .wa-captcha .wa-captcha-input { display: inline !important; }
+.easyreviews .wa-captcha .errormsg { display: inline-block; margin-left: 10px; display:block\9; float:left\9; }
+
+input.error, textarea.error { border: 2px solid red; }
+.errormsg { color: red; margin-left: 170px; display: block; }
+
+.easyreviews ul.pagination { margin: 0; padding: 0; }
+.easyreviews ul.pagination.bottom-padded { margin-bottom: 15px; }
+.easyreviews ul.pagination li { list-style: none; display: inline-block; padding: 0 10px 0 0; line-height: 1.3em; display:block\9; float:left\9; }
+.easyreviews ul.pagination li a { display: inline-block; padding: 13px 16px 13px 16px; display:block\9; float:left\9; text-decoration: none; border: none;
+background: none;}
+.easyreviews ul.pagination li a:hover {border: none; background: none;}
+.easyreviews ul.pagination li.collapsible a { padding: 13px 30px 13px 16px; }
+.easyreviews ul.pagination li a img.icon16 { position: relative; top: 3px; left: -3px; }
+.easyreviews ul.pagination li a i.icon16 { margin-top: -0.1em; }
+.easyreviews ul.pagination li.selected a { background: transparent; }
+.easyreviews ul.pagination li.bold a { font-weight: bold; }
+.easyreviews ul.pagination.compact { margin-bottom: 16px; }
+.easyreviews ul.pagination.compact li { padding-right: 5px; }
+.easyreviews ul.pagination.compact li a { padding: 0; }

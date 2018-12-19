@@ -21,12 +21,10 @@ class photosDefaultLayout extends waLayout
 
         /**
          * Extend photo toolbar in photo-page
-         * Add extra item to toolbar or add extra menu(s)
+         * Add extra item to toolbar
          * @event backend_photo_toolbar
-         * @return array[string][string]string $return[%plugin_id]['top'] insert own menu(s) in top of photo toolbar
          * @return array[string][string]string $return[%plugin_id%]['edit_menu'] Extra item for edit_menu in photo_toolbar
          * @return array[string][string]string $return[%plugin_id%]['share_menu'] Extra item for edit_menu in photo_toolbar
-         * @return array[string][string]string $return[%plugin_id]['bottom'] insert own menu(s) in bottom of photo toolbar
          */
         $this->view->assign('backend_photo_toolbar', wa()->event('backend_photo_toolbar'));
 

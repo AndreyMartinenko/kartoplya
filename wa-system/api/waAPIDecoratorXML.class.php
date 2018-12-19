@@ -11,11 +11,11 @@ class waAPIDecoratorXML extends waAPIDecorator
 
     public function decorate($response)
     {
-        // create XML document
+        // создаем xml-документ
         $this->xml = new DOMDocument('1.0', 'UTF-8');
         $this->xml->formatOutput = true;
 
-        // create root element
+        // создаем root-элемент
         $root = $this->xml->createElement('response');
 
         $this->xml->appendChild($root);

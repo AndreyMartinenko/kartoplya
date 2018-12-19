@@ -3,7 +3,6 @@
 return array(
     'code' => 'BAM',
     'sign' => 'KM',
-	'iso4217' => '977',
     'sign_position' => 0,
     'sign_delim' => ' ',
     'title' => 'Bosnia and Herzegovina convertible mark',

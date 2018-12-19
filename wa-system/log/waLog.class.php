@@ -1,6 +1,7 @@
 <?php
 /**
- * Helper class to log to wa-log directory.
+ * Add hoc logging to "/wa-log/$file".
+ *
  */
 class waLog
 {
@@ -10,65 +11,36 @@ class waLog
     protected static $path;
 
     /**
-     * Save a message to a log file.
+     * Write message into log file.
      *
-     * @param mixed $message Message to be logged.
-     * @param string $file Name of log file relative to wa-log directory.
-     * @return boolean Logging completion status.
+     * @return bool
      */
     public static function log($message, $file = 'error.log')
     {
-        // Make sure it's within allowed directory
-        if (preg_match('~\.\.~', $file)) {
-            return false;
-        }
-
         self::loadPath();
         $file = self::$path.$file;
 
         if (!file_exists($file)) {
-            waFiles::create(dirname($file), true);
+            waFiles::create($file);
             touch($file);
             chmod($file, 0666);
         } elseif (!is_writable($file)) {
             return false;
         }
 
-        $result = false;
         $fd = fopen($file, 'a');
         if (flock($fd, LOCK_EX)) {
-            $result = fwrite($fd, PHP_EOL.date('Y-m-d H:i:s').' '.waRequest::getIp().PHP_EOL.$message.PHP_EOL);
+            fwrite($fd, PHP_EOL.date('Y-m-d H:i:s:').PHP_EOL.$message);
             fflush($fd);
             flock($fd, LOCK_UN);
         }
         fclose($fd);
 
-        return $result !== false;
+        return true;
     }
 
-    /**
-     * Debugging helper to dump any number of variables to a log file.
-     *
-     * @param mixed $var... any number of arguments to be logged
-     * @param string $file Last argument is treated as filename relative to wa-log directory, if it's a string ending with '.log'.
-     * @return boolean Logging completion status.
-     */
     public static function dump($var, $file = 'dump.log')
     {
-        $args = func_get_args();
-        if (count($args) > 1) {
-            $last_arg = end($args);
-            if (is_string($last_arg) && substr($last_arg, -4) === '.log') {
-                $file = array_pop($args);
-                $vars = $args;
-            } else {
-                $vars = $args;
-                $file = 'dump.log';
-            }
-        } else {
-            $vars = array($var);
-        }
-
         $result = '';
         // Show where we've been called from
         if(function_exists('debug_backtrace')) {
@@ -82,19 +54,11 @@ class waLog
             }
         }
 
-        foreach ($vars as $var) {
-            $result .= wa_dump_helper($var)."\n";
-        }
+        $result .= wa_dump_helper($var)."\n";
 
-        return waLog::log($result, $file);
+        waLog::log($result, $file);
     }
 
-    /**
-     * Delete a log file inside wa-log directory.
-     *
-     * @param string $file Name of log file relative to wa-log directory.
-     * @return null
-     */
     public static function delete($file)
     {
         self::loadPath();
@@ -112,7 +76,7 @@ class waLog
             if (!self::$path) {
                 self::$path = wa()->getConfig()->getRootPath().DIRECTORY_SEPARATOR.'wa-log';
             }
-            self::$path = realpath(self::$path).DIRECTORY_SEPARATOR;
+            self::$path .= DIRECTORY_SEPARATOR;
         }
     }
 }

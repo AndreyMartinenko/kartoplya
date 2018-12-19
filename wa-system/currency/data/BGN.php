@@ -3,7 +3,6 @@
 return array(
     'code' => 'BGN',
     'sign' => 'лв',
-	'iso4217' => '975',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Bulgarian lev',

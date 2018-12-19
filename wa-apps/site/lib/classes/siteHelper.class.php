@@ -7,67 +7,15 @@ class siteHelper
     protected static $locale = null;
     protected static $themes = array();
 
-    public static function getRoutingErrorsInfo($domain_id = null)
-    {
-        if (empty($domain_id)) {
-            $domain_id = self::getDomainId();
-        }
-        $not_install_text = '';
-        $incorrect_text = '';
-        $incorrect_ids = array();
-
-        // Get from cache.
-        $routing_error = wa('site')->getConfig()->getRoutingErrors();
-
-        $apps = wa()->getApps();
-
-        if (!empty($routing_error)) {
-            $not_install = ifset($routing_error, 'apps', $domain_id, 'not_install', null);
-            if ($not_install) {
-                $not_install_id = array();
-                foreach ($not_install as $app_name) {
-                    if (isset($apps[$app_name]['name'])) {
-                        $not_install_id[] = $apps[$app_name]['name'];
-                    }
-                }
-                $not_install_text = sprintf(_w('You have no rules set up for %s app.', 'You have no rules set up for %s apps.',
-                    count($not_install), false), implode(_w('”, “'), $not_install_id));
-            }
-
-            $incorrect = ifset($routing_error, 'apps', $domain_id, 'incorrect', null);
-            if ($incorrect) {
-                foreach ($incorrect as $app_id => $app_name) {
-                    if (isset($apps[$app_name]['name'])) {
-                        $incorrect_ids[$app_id] = $apps[$app_name]['name'];
-                    }
-
-                    if ($app_name == ':text') {
-                        $incorrect_ids[$app_id] = _w('Custom text');
-                    }
-
-                    if ($app_name == ':redirect') {
-                        $incorrect_ids[$app_id] = _w('Redirect');
-                    }
-                }
-                $incorrect_text = sprintf(_w('Some rules of %s app are incorrect.', 'Some rules of %s apps are incorrect.',
-                    count($routing_error['apps'][$domain_id]['incorrect']), false), implode(_w('”, “'), $incorrect_ids));
-            }
-        }
-
-        return array(
-            'not_install'   => $not_install_text,
-            'incorrect'     => $incorrect_text,
-            'incorrect_ids' => $incorrect_ids
-        );
-    }
-
     public static function getDomains($full = false)
     {
         if (!self::$domains) {
             $domain_model = new siteDomainModel();
+
             $q = $domain_model->select('*')->order('id');
             if (!wa()->getUser()->isAdmin('site')) {
                 $domain_ids = wa()->getUser()->getRights('site', 'domain.%', false);
+
                 if ($domain_ids) {
                     $q->where("id IN ('".implode("','", $domain_ids)."')");
                 } else {
@@ -75,13 +23,18 @@ class siteHelper
                 }
             }
             self::$domains = $q->fetchAll('id');
+            //
+            var_dump(wa()->getUser()->isAdmin('site'));
+            //
             if (wa()->getUser()->isAdmin('site')) {
                 $routes = wa('wa-system')->getConfig()->getRouting();
+
                 // hide default routing (for all domains)
                 if (isset($routes['default'])) {
                     unset($routes['default']);
                 }
                 $ds = array();
+                // var_dump($ds);
                 foreach (self::$domains as $d) {
                     $ds[] = $d['name'];
                 }
@@ -112,9 +65,9 @@ class siteHelper
             $result[$id] = $d['title'] ? $d['title'] : $d['name'];
             if ($full) {
                 $result[$id] = array(
-                    'name'     => $d['name'],
-                    'title'    => $result[$id],
-                    'style'    => $d['style'],
+                    'name' => $d['name'],
+                    'title' => $result[$id],
+                    'style' => $d['style'],
                     'is_alias' => wa()->getRouting()->isAlias($d['name'])
                 );
             }
@@ -251,7 +204,7 @@ class siteHelper
                 mkdir($dest.'/'.$rel_path);
             } elseif ($file->isFile()) {
                 copy($file->getPathName(), $dest.'/'.$rel_path);
-                if (basename($file->getPathName()) == 'theme.xml') {
+                if(basename($file->getPathName()) == 'theme.xml') {
                     @touch($dest.'/'.$rel_path);
                 }
             }
@@ -296,20 +249,5 @@ class siteHelper
             return false;
         }
         return $url;
-    }
-
-    public static function getOneStringKey($dkim_pub_key)
-    {
-        $one_string_key = trim(preg_replace('/^\-{5}[^\-]+\-{5}(.+)\-{5}[^\-]+\-{5}$/s', '$1', trim($dkim_pub_key)));
-        //$one_string_key = str_replace('-----BEGIN PUBLIC KEY-----', '', $dkim_pub_key);
-        //$one_string_key = trim(str_replace('-----END PUBLIC KEY-----', '', $one_string_key));
-        $one_string_key = preg_replace('/\s+/s', '', $one_string_key);
-        return $one_string_key;
-    }
-
-    public static function getDkimSelector($email)
-    {
-        $e = explode('@', $email);
-        return trim(preg_replace('/[^a-z0-9]/i', '', $e[0])).'wamail';
     }
 }

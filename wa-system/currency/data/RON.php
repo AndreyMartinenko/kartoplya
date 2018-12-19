@@ -3,7 +3,6 @@
 return array(
     'code' => 'RON',
     'sign' => 'leu',
-	'iso4217' => '946',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Romanian leu',

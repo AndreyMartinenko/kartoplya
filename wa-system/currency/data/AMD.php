@@ -3,7 +3,6 @@
 return array(
     'code' => 'AMD',
     'sign' => 'dram',
-	'iso4217' => '51',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Armenian dram',

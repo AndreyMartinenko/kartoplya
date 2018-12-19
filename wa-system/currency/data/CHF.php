@@ -3,7 +3,6 @@
 return array(
     'code' => 'CHF',
     'sign' => 'CHF',
-	'iso4217' => '756',
     'sign_position' => 0,
     'sign_delim' => ' ',
     'title' => 'Swiss franc',

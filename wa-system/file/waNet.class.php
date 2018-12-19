@@ -1,16 +1,4 @@
 <?php
-/*
- * This file is part of Webasyst framework.
- *
- * Licensed under the terms of the GNU Lesser General Public License (LGPL).
- * http://www.webasyst.com/framework/license/
- *
- * @link http://www.webasyst.com/
- * @author Webasyst LLC
- * @copyright 2017 Webasyst LLC
- * @package wa-system
- * @subpackage files
- */
 
 /**
  * Class waNet
@@ -45,40 +33,32 @@ class waNet
     protected $cookies = null;
     protected $request_headers = array();
     protected $options = array(
-        'timeout'             => 15,
-        'format'              => null,
-        'request_format'      => null,
-        'required_get_fields' => array(),
-        'charset'             => 'utf-8',
-        'verify'              => true,
-        'md5'                 => false,
-        'log'                 => false,
-        'authorization'       => false,
-        'login'               => null,
-        'password'            => null,
-        # proxy settings
-        'proxy_host'          => null,
-        'proxy_port'          => null,
-        'proxy_user'          => null,
-        'proxy_password'      => null,
-        'proxy_auth'          => 'basic',
-        # specify custom interface
-        'interface'           => null,
-        # string with list of expected codes separated comma or space; null to accept any code
-        'expected_http_code'  => 200,
-        'priority'            => array(
+        'timeout'        => 15,
+        'format'         => null,
+        'charset'        => 'utf-8',
+        'verify'         => true,
+        'md5'            => false,
+        'log'            => false,
+        'authorization'  => array(),
+        'proxy_host'     => null,
+        'proxy_port'     => null,
+        'proxy_user'     => null,
+        'proxy_password' => null,
+        'proxy_auth'     => 'basic',
+        'priority'       => array(
             'curl',
             'fopen',
             'socket',
         ),
-        'ssl'                 => array(
+        'ssl'            => array(
             'key'      => '',
             'cert'     => '',
             'password' => '',
         ),
-    );
 
-    private static $master_options = array();
+        //TODO add support for auth data
+        //auth data
+    );
 
     protected $raw_response;
     protected $decoded_response;
@@ -87,45 +67,17 @@ class waNet
 
     private $ch;
 
-    private static $mh;
-    /** @var waNet[] */
-    private static $instances = array();
-
     /**
      * waNet constructor.
-     * @param array $options key => value format
-     * @param array $custom_headers key => value format
+     * @param array $options
+     * @param array $custom_headers
      */
     public function __construct($options = array(), $custom_headers = array())
     {
         $this->user_agent = sprintf('Webasyst-Framework/%s', wa()->getVersion('webasyst'));
-
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            $this->options['verify'] = false;
-        }
-
-        $this->options = array_merge(
-            $this->options,
-            $this->getDefaultOptions(),
-            $options,
-            self::$master_options
-        );
-
+        //TODO read proxy settings from generic config
+        $this->options = array_merge($this->options, $options);
         $this->request_headers = array_merge($this->request_headers, $custom_headers);
-    }
-
-    private function getDefaultOptions()
-    {
-        $config = wa()->getConfigPath().'/net.php';
-        $options = array();
-        if (file_exists($config)) {
-            $options = include($config);
-        }
-        if (!is_array($options)) {
-            $options = array();
-        }
-
-        return $options;
     }
 
     /**
@@ -138,7 +90,6 @@ class waNet
         if ($user_agent != null) {
             $this->user_agent = $user_agent;
         }
-
         return $current_user_agent;
     }
 
@@ -153,15 +104,7 @@ class waNet
 
     }
 
-    /**
-     * @param $url
-     * @param array|string|SimpleXMLElement|DOMDocument $content Parameter type relate to request format (xml/json/etc)
-     * @param string $method
-     * @param callable $callback
-     * @return string|array|SimpleXMLElement|waNet Type related to response for response format (json/xml/etc). Self return for promises
-     * @throws waException
-     */
-    public function query($url, $content = array(), $method = self::METHOD_GET, $callback = null)
+    public function query($url, $content = array(), $method = self::METHOD_GET)
     {
         $transport = $this->getTransport($url);
 
@@ -170,7 +113,7 @@ class waNet
 
         switch ($transport) {
             case self::TRANSPORT_CURL:
-                $response = $this->runCurl($url, $content, $method, array(), $callback);
+                $response = $this->runCurl($url, $content, $method);
                 break;
             case self::TRANSPORT_FOPEN:
                 $response = $this->runStreamContext($url, $content, $method);
@@ -183,59 +126,26 @@ class waNet
                 break;
         }
 
-        if ($response instanceof self) {
-            return $response;
-        } else {
-
-            $this->onQueryComplete($response);
-
-            return $this->getResponse();
-        }
-    }
-
-    protected function onQueryComplete($response)
-    {
         $this->decodeResponse($response);
 
-        if ($this->options['expected_http_code'] !== null) {
-            $expected = $this->options['expected_http_code'];
-            if (!is_array($expected)) {
-                $expected = preg_split('@[,:;.\s]+@', $this->options['expected_http_code']);
-            }
-            if (empty($this->response_header['http_code']) || !in_array($this->response_header['http_code'], $expected)) {
-                throw new waException($response, $this->response_header['http_code']);
-            }
+        if (empty($this->response_header['http_code']) || ($this->response_header['http_code'] != 200)) {
+            throw new waException($response, $this->response_header['http_code']);
         }
+
+        return $this->getResponse();
     }
 
-    /**
-     * @param string $url
-     * @param array|string|SimpleXMLElement|DOMDocument $content
-     * @param string $method
-     */
     protected function buildRequest(&$url, &$content, &$method)
     {
-        $format = ifempty($this->options['request_format'], $this->options['format']);
-        if ($content && in_array($format, array(self::FORMAT_XML, self::FORMAT_XML), true)) {
-            $method = self::METHOD_POST;
+        if (!$content) {
+            $content = self::getPost($url);
         }
 
-        if ($content && ($method == self::METHOD_GET)) {
-            $get = is_string($content) ? $content : http_build_query($content);
-            $url .= strpos($url, '?') ? '&' : '?'.$get;
-            $content = array();
-        }
-
-        if ($post = self::getPost($url, $this->options['required_get_fields'])) {
-            $method = self::METHOD_POST;
-            $content = array_merge($post, $content);
-        }
-
-        switch ($method) {
-            case self::METHOD_POST:
-            case self::METHOD_PUT:
-                $content = $this->encodeRequest($content);
-                break;
+        if ($content) {
+            if ($method == self::METHOD_GET) {
+                $method = self::METHOD_POST;
+            }
+            $content = $this->encodeRequest($content);
         }
     }
 
@@ -243,20 +153,18 @@ class waNet
     {
         $this->request_headers['Connection'] = 'close';
         $this->request_headers['Date'] = date('c');
-        if (empty($this->request_headers['Accept'])) {
-            switch ($this->options['format']) {
-                case self::FORMAT_JSON:
-                    $this->request_headers["Accept"] = "application/json";
-                    break;
+        switch ($this->options['format']) {
+            case self::FORMAT_JSON:
+                $this->request_headers["Accept"] = "application/json";
+                break;
 
-                case self::FORMAT_XML:
-                    $this->request_headers["Accept"] = "text/xml";
-                    break;
+            case self::FORMAT_XML:
+                $this->request_headers["Accept"] = "text/xml";
+                break;
 
-                default:
-                    $this->request_headers['Accept'] = '*/*';
-                    break;
-            }
+            default:
+                $this->request_headers['Accept'] = '*/*';
+                break;
         }
 
         $this->request_headers['Accept-Charset'] = $this->options['charset'];
@@ -274,8 +182,7 @@ class waNet
          */
 
         if (!empty($this->options['authorization'])) {
-            $authorization = sprintf("%s:%s", $this->options['login'], $this->options['password']);
-            $this->request_headers["Authorization"] = "Basic ".base64_encode($authorization);
+            $this->request_headers["Authorization"] = "Basic ".urlencode(base64_encode("{$this->options['login']}:{$this->options['password']}"));
         }
 
         $this->request_headers['User-Agent'] = $this->user_agent;
@@ -288,35 +195,30 @@ class waNet
             foreach ($this->request_headers as $header => $value) {
                 $headers[] = sprintf('%s: %s', $header, $value);
             }
-
             return $headers;
         }
     }
 
     /**
-     * @param array|string|SimpleXMLElement|DOMDocument $content
+     * @param array $content
      * @return string
-     * @throws waException
      */
     protected function encodeRequest($content)
     {
-        $format = ifempty($this->options['request_format'], $this->options['format']);
-
         if (!is_string($content)) {
-            switch ($format) {
+            switch ($this->options['format']) {
                 case self::FORMAT_JSON:
                     $content = json_encode($content);
                     break;
                 case self::FORMAT_XML:
                     if (is_object($content)) {
                         $class = get_class($content);
-
-                        if (class_exists('SimpleXMLElement') && ($content instanceof SimpleXMLElement)) {
+                        if ($class == 'SimpleXMLElement') {
                             /**
                              * @var SimpleXMLElement $content
                              */
                             $content = (string)$content->asXML();
-                        } elseif (class_exists('DOMDocument') && ($content instanceof DOMDocument)) {
+                        } elseif ($class == 'DOMDocument') {
                             /**
                              * @var DOMDocument $content
                              */
@@ -325,9 +227,6 @@ class waNet
                             }
                             $content->preserveWhiteSpace = false;
                             $content = (string)$content->saveXML();
-                        } else {
-                            $message = 'Unsupported class "%s" of content object. Expected instance of SimpleXMLElement or DOMDocument classes.';
-                            throw new waException(sprintf($message, $class));
                         }
                     }
                     break;
@@ -338,57 +237,79 @@ class waNet
         }
 
         $this->request_headers['Content-Length'] = strlen($content);
-        if (empty($this->request_headers['Content-Type'])) {
-            switch ($format) {
-                case self::FORMAT_JSON:
-                    $this->request_headers['Content-Type'] = 'application/json';
-                    break;
+        switch ($this->options['format']) {
+            case self::FORMAT_JSON:
+                $this->request_headers['Content-Type'] = 'application/json';
+                break;
 
-                case self::FORMAT_XML:
-                    $this->request_headers['Content-Type'] = 'application/xml';
-                    break;
-                case self::FORMAT_CUSTOM:
-                    //$this->request_headers['Content-Type'] ='application/'.$this->options['custom_content_type'];
-                    break;
-                default:
-                    $this->request_headers['Content-Type'] = 'application/x-www-form-urlencoded';
-                    break;
-            }
+            case self::FORMAT_XML:
+                $this->request_headers['Content-Type'] = 'application/xml';
+                break;
+            case self::FORMAT_CUSTOM:
+                //$this->request_headers['Content-Type'] ='application/'.$this->options['custom_content_type'];
+                break;
+            default:
+                $this->request_headers['Content-Type'] = 'application/x-www-form-urlencoded';
+                break;
         }
         if (!empty($this->options['md5'])) {
             $this->request_headers['Content-MD5'] = base64_encode(md5($content, true));
         }
-
         return $content;
     }
 
-    /**
-     * @param string $response
-     * @throws waException
-     */
     protected function decodeResponse($response)
     {
         $this->raw_response = $response;
         $this->decoded_response = null;
         switch ($this->options['format']) {
             case self::FORMAT_JSON:
-                $this->decoded_response = waUtils::jsonDecode($this->raw_response, true);
+                $this->decoded_response = @json_decode($this->raw_response, true);
+                if (function_exists('json_last_error')) {
+                    if (JSON_ERROR_NONE !== json_last_error()) {
+                        if (function_exists('json_last_error_msg')) {
+                            $message = json_last_error_msg();
+                        } else {
+                            $message = json_last_error();
+                            $codes = array(
+                                'JSON_ERROR_DEPTH'            => 'The maximum stack depth has been exceeded',
+                                'JSON_ERROR_STATE_MISMATCH'   => 'Invalid or malformed JSON',
+                                'JSON_ERROR_CTRL_CHAR'        => 'Control character error, possibly incorrectly encoded',
+                                'JSON_ERROR_SYNTAX'           => 'Syntax error',
+                                'JSON_ERROR_UTF8'             => 'Malformed UTF-8 characters, possibly incorrectly encoded',//PHP 5.3.3
+                                'JSON_ERROR_RECURSION'        => 'One or more recursive references in the value to be encoded',//PHP 5.5.0
+                                'JSON_ERROR_INF_OR_NAN'       => 'One or more NAN or INF values in the value to be encoded',//PHP 5.5.0
+                                'JSON_ERROR_UNSUPPORTED_TYPE' => 'A value of a type that cannot be encoded was given',//PHP 5.5.0
+                            );
+
+                            foreach ($codes as $code => $_message) {
+                                if (defined($code) && (constant($code) == $message)) {
+                                    $message = $_message;
+                                    break;
+                                }
+                            }
+
+                        }
+                        throw new waException('Error while decode JSON response: '.$message);
+                    }
+                } else {
+                    if ($this->decoded_response === null) {
+                        throw new waException('Error while decode JSON response');
+                    }
+                }
                 break;
             case self::FORMAT_XML:
-                $xml_options = LIBXML_NOCDATA | LIBXML_NOENT | LIBXML_NONET;
                 libxml_use_internal_errors(true);
-                libxml_disable_entity_loader(false);
                 libxml_clear_errors();
-                $this->decoded_response = @simplexml_load_string($this->raw_response, null, $xml_options);
+                $this->decoded_response = @simplexml_load_string($this->raw_response);
 
                 if ($this->decoded_response === false) {
-                    if ($error = libxml_get_last_error()) {
-                        /**
-                         * @var LibXMLError $error
-                         */
-                        $this->log($error->message);
-                        throw new waException('Error while decode XML response: '.$error->message, $error->code);
-                    }
+                    $error = libxml_get_last_error();
+                    /**
+                     * @var LibXMLError $error
+                     */
+                    $this->log($error->message);
+                    throw new waException('Error while decode XML response: '.$error->message, $error->code);
                 }
                 break;
             default:
@@ -397,30 +318,17 @@ class waNet
         }
     }
 
-    /**
-     * @param bool $raw If param is true method returns raw response string
-     * @return string|array|SimpleXMLElement Type related to response for response format (json/xml/etc)
-     */
     public function getResponse($raw = false)
     {
         return $raw ? $this->raw_response : $this->decoded_response;
     }
 
-    /**
-     * @param string|null $header
-     * @return array|mixed|null
-     */
     public function getResponseHeader($header = null)
     {
         if (!empty($header)) {
-            if (isset($this->response_header[$header])) {
-                return $this->response_header[$header];
-            }
             $header = str_replace('-', '_', strtolower($header));
-
             return ifset($this->response_header[$header]);
         }
-
         return $this->response_header;
     }
 
@@ -439,10 +347,6 @@ class waNet
         }
     }
 
-    /**
-     * @param string $url
-     * @return string|bool
-     */
     protected function getTransport($url)
     {
         $available = array();
@@ -485,20 +389,11 @@ class waNet
         return false;
     }
 
-    private function runCurl($url, $params, $method, $curl_options = array(), $callback = null)
+    private function runCurl($url, $params, $method, $curl_options = array())
     {
         $this->getCurl($url, $params, $method, $curl_options);
-        if (!empty($callback) && is_callable($callback) && !empty(self::$namespace) && !empty(self::$mh[self::$namespace])) {
-            return $this->addMultiCurl($callback);
-        } else {
-            $response = @curl_exec($this->ch);
+        $response = @curl_exec($this->ch);
 
-            return $this->handleCurlResponse($response);
-        }
-    }
-
-    private function handleCurlResponse($response)
-    {
         if (empty($response)) {
             $error_no = curl_errno($this->ch);
             $error_str = curl_error($this->ch);
@@ -512,93 +407,16 @@ class waNet
         return $body;
     }
 
-    protected function onMultiQueryComplete($callback)
-    {
-        $content = curl_multi_getcontent($this->ch);
-        try {
-            $body = $this->handleCurlResponse($content);
-            curl_multi_remove_handle(self::$mh[self::$namespace], $this->ch);
-            $this->onQueryComplete($body);
-
-            $response = $this->getResponse();
-            call_user_func_array($callback, array($this, $response));
-        } catch (waException $ex) {
-            call_user_func_array($callback, array($this, $ex));
-        }
-    }
-
-    private static $namespace = null;
-
-    private function addMultiCurl($callback)
-    {
-        $id = curl_multi_add_handle(self::$mh[self::$namespace], $this->ch);
-        self::$instances[self::$namespace][$id] = array(
-            'instance' => $this,
-            'callback' => $callback,
-        );
-
-        return $this;
-    }
-
-
-    public static function multiQuery($namespace = null, $options = array())
-    {
-        if ($options) {
-            self::$master_options = $options;
-        }
-
-        if ($namespace && !isset(self::$mh[$namespace])) {
-            if (empty(self::$mh[$namespace]) && function_exists('curl_multi_init')) {
-                self::$mh[$namespace] = curl_multi_init();
-                if (!isset(self::$instances[$namespace])) {
-                    self::$instances[$namespace] = array();
-                }
-                self::$namespace = $namespace;
-            }
-        } elseif ((($namespace === null) || (self::$namespace === $namespace)) && isset(self::$mh[self::$namespace])) {
-            $namespace = self::$namespace;
-            if (self::$instances[$namespace]) {
-                $active = null;
-
-                do {
-                    $mrc = curl_multi_exec(self::$mh[$namespace], $active);
-                } while ($mrc == CURLM_CALL_MULTI_PERFORM);
-
-                while ($active && $mrc == CURLM_OK) {
-                    if (curl_multi_select(self::$mh[$namespace]) == -1) {
-                        usleep(100);
-                    }
-
-                    do {
-                        $mrc = curl_multi_exec(self::$mh[$namespace], $active);
-                    } while ($mrc == CURLM_CALL_MULTI_PERFORM);
-                }
-
-                foreach (self::$instances[$namespace] as $id => $data) {
-                    $instance = $data['instance'];
-                    /** @var waNet $instance */
-                    $instance->onMultiQueryComplete($data['callback']);
-                }
-                self::$instances = array();
-            }
-
-            unset(self::$instances[$namespace]);
-
-            curl_multi_close(self::$mh[$namespace]);
-            unset(self::$mh[$namespace]);
-        }
-    }
-
     private function getCurl($url, $content, $method, $curl_options = array())
     {
         if (extension_loaded('curl') && function_exists('curl_init')) {
             if (empty($this->ch)) {
                 if (!($this->ch = curl_init())) {
-                    throw new waException(_ws("Error cUrl init"));
+                    throw new Exception(_ws("Error cUrl init"));
                 }
 
                 if (curl_errno($this->ch) != 0) {
-                    throw new waException(_ws("Error cUrl init").' '.curl_errno($this->ch).' '.curl_error($this->ch));
+                    throw new Exception(_ws("Error cUrl init").' '.curl_errno($this->ch).' '.curl_error($this->ch));
                 }
                 if (!is_array($curl_options)) {
                     $curl_options = array();
@@ -612,10 +430,6 @@ class waNet
                     CURLOPT_DNS_CACHE_TIMEOUT => 3600,
                     CURLOPT_USERAGENT         => $this->user_agent,
                 );
-
-                if (isset($this->options['interface'])) {
-                    $curl_default_options[CURLOPT_INTERFACE] = $this->options['interface'];
-                }
 
                 if ($this->options['verify']) {
 
@@ -679,33 +493,27 @@ class waNet
 
             $curl_options = array();
 
-            switch ($method) {
-                case self::METHOD_POST:
-                    $curl_options[CURLOPT_POST] = 1;
-                    if ($content) {
+            if ($content) {
+                switch ($method) {
+                    case self::METHOD_POST:
+                        $curl_options[CURLOPT_POST] = 1;
                         $curl_options[CURLOPT_POSTFIELDS] = $content;
-                    }
-                    break;
-                case self::METHOD_PUT:
-                    $curl_options[CURLOPT_CUSTOMREQUEST] = $method;
-                    if ($content) {
+                        break;
+                    case self::METHOD_PUT:
                         $curl_options[CURLOPT_POST] = 0;
+                        $curl_options[CURLOPT_CUSTOMREQUEST] = $method;
                         $curl_options[CURLOPT_POSTFIELDS] = $content;
-                    }
-                    break;
-                case self::METHOD_DELETE:
-                    $curl_options[CURLOPT_CUSTOMREQUEST] = $method;
-                    if ($content) {
+                        break;
+                    case self::METHOD_DELETE:
                         $curl_options[CURLOPT_POST] = 0;
+                        $curl_options[CURLOPT_CUSTOMREQUEST] = $method;
                         $curl_options[CURLOPT_POSTFIELDS] = $content;
-                    }
-                    break;
-                default:
-                    if ($content) {
+                        break;
+                    default:
                         $curl_options[CURLOPT_POST] = 0;
                         $curl_options[CURLOPT_CUSTOMREQUEST] = null;
                         $curl_options[CURLOPT_POSTFIELDS] = null;
-                    }
+                }
             }
 
             $headers = $this->buildHeaders('curl', false);
@@ -714,10 +522,6 @@ class waNet
             }
 
             if (empty($curl_options[CURLOPT_POST]) && empty($curl_options[CURLOPT_POSTFIELDS])) {
-                if (version_compare(PHP_VERSION, '5.4', '>=') || (!ini_get('safe_mode') && !ini_get('open_basedir'))) {
-                    $curl_options[CURLOPT_FOLLOWLOCATION] = true;
-                }
-
                 if (version_compare(PHP_VERSION, '5.4', '>=') || (!ini_get('safe_mode') && !ini_get('open_basedir'))) {
                     $curl_options[CURLOPT_FOLLOWLOCATION] = true;
                 }
@@ -763,15 +567,12 @@ class waNet
             }
         }
 
-        if ($this->options['expected_http_code'] !== null) {
-            if (!$response || !in_array($response_code, array('unknown', $this->options['expected_http_code']), true)) {
-                if (empty($hint)) {
-                    $hint = $this->getHint(__LINE__);
-                }
-                throw new waException("Invalid server response with code {$response_code} while request {$url}.{$hint}\n\t(fopen used)");
+        if (!$response || !in_array($response_code, array('unknown', 200), true)) {
+            if (empty($hint)) {
+                $hint = $this->getHint(__LINE__);
             }
+            throw new Exception("Invalid server response with code {$response_code} while request {$url}.{$hint}\n\t(fopen used)");
         }
-
         return $response;
     }
 
@@ -844,6 +645,7 @@ class waNet
     }
 
     /**
+     * @todo not implemented
      * @param $url
      * @param $content
      * @param $method
@@ -912,7 +714,6 @@ class waNet
             list($header, $body) = explode("\r\n\r\n", $response, 2);
             $this->parseHeader(preg_split('@[\r\n]+@', $header));
         }
-
         return $body;
     }
 
@@ -952,8 +753,7 @@ class waNet
                 $url .= '?'.http_build_query($get);
             }
         }
-
-        return $post;
+        return $post ? http_build_query($post) : null;
     }
 
     private function getHint($line)
@@ -965,7 +765,6 @@ class waNet
         ) {
             $hint = strip_tags($error['message']);
         }
-
         return $hint;
     }
 
@@ -979,20 +778,5 @@ class waNet
         if (!empty($this->ch)) {
             curl_close($this->ch);
         }
-    }
-
-    /**
-     * @since PHP 5.6.0
-     * @return array
-     */
-    public function __debugInfo()
-    {
-        return array(
-            'options'          => $this->options,
-            'request_headers'  => $this->request_headers,
-            'response_headers' => $this->response_header,
-            'raw'              => $this->raw_response,
-            'preview'          => $this->decoded_response,
-        );
     }
 }

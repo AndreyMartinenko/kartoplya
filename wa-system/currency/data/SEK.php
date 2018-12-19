@@ -3,7 +3,6 @@
 return array(
     'code' => 'SEK',
     'sign' => 'kr',
-	'iso4217' => '752',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Swedish krona',

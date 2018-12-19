@@ -3,7 +3,6 @@
 return array(
     'code' => 'BBD',
     'sign' => 'Bds$',
-	'iso4217' => '52',
     'sign_position' => 0,
     'sign_delim' => '',
     'title' => 'Barbadian dollar',

@@ -38,20 +38,6 @@ class waAPIController
 
     public function dispatch()
     {
-        // Make sure API is enabled
-        if (wa('webasyst')->getConfig()->getOption('disable_api')) {
-            $msg = wa('webasyst')->getConfig()->getOption('disable_api_message');
-            throw new waAPIException('disabled', ifempty($msg, 'API is disabled'), 404);
-        }
-
-        // Redirect to HTTPS if set up in domain params
-        if (!waRequest::isHttps() && waRouting::getDomainConfig('ssl_all')) {
-            $domain = wa()->getRouting()->getDomain(null, true);
-            $url = 'https://'.wa()->getRouting()->getDomainUrl($domain).'/'.wa()->getConfig()->getRequestUrl();
-            wa()->getResponse()->redirect($url, 301);
-            return;
-        }
-
         $request_url = trim(wa()->getConfig()->getRequestUrl(true, true), '/');
         if ($request_url === 'api.php/auth') {
             $user = wa()->getUser();
@@ -112,9 +98,6 @@ class waAPIController
         if (!waSystem::getInstance()->appExists($app)) {
             throw new waAPIException('invalid_request', 'Application '.$app.' not exists');
         }
-        if (wa()->getUser()->getRights($app, 'backend') <= 0) {
-            throw new waAPIException('access_denied', 403);
-        }
 
         // check scope
         $scope = explode(',', $token['scope']);
@@ -150,7 +133,7 @@ class waAPIController
                     throw new waAPIException('invalid_token', 'Access token has expired', 401);
                 }
                 // auth user
-                wa()->setUser(new waApiAuthUser($data['contact_id']));
+                wa()->setUser(new waUser($data['contact_id']));
                 return $data;
             }
             throw new waAPIException('invalid_token', 'Invalid access token', 401);

@@ -68,13 +68,7 @@ class waSMS
         }
 
         $class_name = $options['adapter'].'SMS';
-        $path = wa()->getConfig()->getPath('plugins').'/sms/'.$options['adapter'].'/lib/'.$class_name.'.class.php';
-        if (file_exists($path)) {
-            include_once($path);
-        }
-        if (!class_exists($class_name)) {
-            throw new waException('Unable to initialize SMS adapter '.$options['adapter']);
-        }
+        require_once(wa()->getConfig()->getPath('plugins').'/sms/'.$options['adapter'].'/lib/'.$class_name.'.class.php');
         return new $class_name($options);
     }
 }

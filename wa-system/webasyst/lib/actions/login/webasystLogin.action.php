@@ -1,15 +1,21 @@
 <?php
 
-class webasystLoginAction extends waBackendLoginAction
+class webasystLoginAction extends waLoginAction
 {
+
     public function execute()
     {
-        $this->assign('title', $this->getTitle());
-        $this->assign('title_style', $this->getTitleStyle());
+        $this->view->assign('title', $this->getTitle());
+        $this->view->assign('title_style', $this->getTitleStyle());
 
         $this->view->setOptions(array('left_delimiter' => '{', 'right_delimiter' => '}'));
         if ($this->template === null) {
-            $this->template = 'Login.html';
+            if (waRequest::isMobile()) {
+                $this->setLayout(null);
+                $this->template = 'LoginMobile.html';
+            } else {
+                $this->template = 'Login.html';
+            }
             $template_file = wa()->getDataPath('templates/'.$this->template, false, 'webasyst');
             if (file_exists($template_file)) {
                 $this->template = 'file:'.$template_file;
@@ -17,14 +23,8 @@ class webasystLoginAction extends waBackendLoginAction
                 $this->template = wa()->getAppPath('templates/actions/login/', 'webasyst') . $this->template;
             }
         }
-
-
-        $this->view->assign(array(
-            'login' => waRequest::post('login', $this->getStorage()->read('auth_login'))
-        ));
-
+        $this->view->assign('login', waRequest::post('login', $this->getStorage()->read('auth_login')));
         parent::execute();
-
         if ($this->layout) {
             $this->layout->assign('error', $this->view->getVars('error'));
         }
@@ -35,7 +35,16 @@ class webasystLoginAction extends waBackendLoginAction
         } else if (!$ref) {
             $this->getStorage()->remove('login_back_on_cancel');
         }
-        $this->assign('back_on_cancel', wa()->getStorage()->read('login_back_on_cancel'));
+        $this->view->assign('back_on_cancel', wa()->getStorage()->read('login_back_on_cancel'));
+    }
+
+    protected function saveReferer()
+    {
+
+    }
+
+    protected function checkAuthConfig()
+    {
 
     }
 
@@ -67,18 +76,6 @@ class webasystLoginAction extends waBackendLoginAction
     public function getTitleStyle()
     {
         return $this->getConfig()->getOption('login_form_title_style');
-    }
-
-    /**
-     * @param array $options
-     * @return waBackendLoginForm
-     */
-    protected function getFormRenderer($options = array())
-    {
-        $request_url = trim(wa()->getConfig()->getRequestUrl(true, true), '/');
-        $is_api_oauth = $request_url === 'api.php/auth';
-        $options['is_api_oauth'] = $is_api_oauth;
-        return parent::getFormRenderer($options);
     }
 }
 

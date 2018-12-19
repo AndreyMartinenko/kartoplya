@@ -1,7 +1,5 @@
 <?php 
-/**
- * Interface for a simple cache. One object = one cached value.
- */
+
 /*
  * This file is part of Webasyst framework.
  *

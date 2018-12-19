@@ -477,9 +477,9 @@ class photosAlbumModel extends waModel
         } else {
             $item = $this->getById($id);
             if (!$item['url']) {
-                $url = $this->suggestUniqueUrl(photosPhoto::suggestUrl($item['name']));
+                $url = suggestUniqueUrl(photosPhoto::suggestUrl($item['name']));
                 $this->updateUrl($id, $url);
-            } elseif (!$item['full_url']) {
+            } else if (!$item['full_url']) {
                 $this->updateUrl($id, $item['url']);
             }
         }

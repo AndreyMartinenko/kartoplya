@@ -83,9 +83,7 @@ class webasystBackendActions extends waViewActions
         } else {
             $user_filters = array();
         }
-        $activity = $activity_action->getLogs(array(
-            'app_id' => ifempty($user_filters),
-        ), $count);
+        $activity = $activity_action->getLogs(array(), $count);
         $activity_load_more = $count == 50;
 
         $is_admin = wa()->getUser()->isAdmin('webasyst');
@@ -181,6 +179,5 @@ class webasystBackendActions extends waViewActions
             }
         }
     }
-
 }
 

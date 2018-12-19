@@ -30,9 +30,6 @@ class Swift_Validate
      */
     public static function email($email)
     {
-        $validator = new waEmailValidator();
-        return (bool) $validator->isValid($email);
-
         if (self::$grammar===null) {
             self::$grammar = Swift_DependencyContainer::getInstance()
                 ->lookup('mime.grammar');

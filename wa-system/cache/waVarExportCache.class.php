@@ -22,7 +22,7 @@ class waVarExportCache extends waFileCache
         }
         $result = waUtils::varExportToFile($v, $file);
         if (!$result && waSystemConfig::isDebug()) {
-            throw new waException("Cannot write to cache file ".$file, 601);
+             throw new waException("Cannot write to cache file ".$file, 601);
         }
         return $result;
     }
@@ -34,13 +34,13 @@ class waVarExportCache extends waFileCache
                 $this->delete();
                 return null;
             } else {
-                if (!@filesize($file)) {
+                if (!filesize($file)) {
                     $this->delete();
                     return null;
                 }
                 $r = @include($file);
                 // check cache
-                if ($r === false || $r === null) {
+                if (!$r) {
                     $this->delete();
                     return null;
                 }

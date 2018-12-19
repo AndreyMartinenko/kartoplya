@@ -119,7 +119,7 @@ class waRequest
      * Returns the contents of the GET request.
      *
      * @param string|null $name GET request field name. If empty, entire contents of the GET request are returned.
-     * @param string|int|array|null $default The default value, which is returned if no value is found for the request field
+     * @param string|null $default The default value, which is returned if no value is found for the request field
      *     specified in $name parameter.
      * @param string|null $type Data type to which the cookie record value must be converted, specified by means of one
      *     of TYPE_* constants:
@@ -362,64 +362,21 @@ class waRequest
     /**
      * Returns user's IP address.
      *
-     * @param bool $get_as_int
-     * @return string|int IP address either as string or as integer
+     * @param string|int $get_as_int IP address either as string or as integer
      */
     public static function getIp($get_as_int = false)
     {
-        //
-        // Normally the only trusted source of client's IP address is REMOTE_ADDR.
-        // Everything else (HTTP_CLIENT_IP, HTTP_X_FORWARDED_FOR) comes from headers
-        // and may be forged by client himself.
-        //
-        // However, many hostings use reverse-proxying (such as nginx in front of apache).
-        // In such case REMOTE_ADDR will contain an address of a proxy.
-        // Unfortunately, we cannot automatically find out whether hosting uses
-        // reverse-proxy or not.
-        //
-        // To control this aspect, there is a config option 'trusted_proxies' in wa-config/config.php
-        // When hosting does not use reverse-proxy, 'trusted_proxies' should be set to empty array.
-        // When reverse-proxying is used, it should be a list of IP addresses of proxies.
-        // The result is that when REMOTE_ADDR is one of listed IPs, getIp() is allowed to look
-        // into header-based sources such as HTTP_X_FORWARDED_FOR.
-        //
-        // The default behaviour in case 'trusted_proxies' is not set is to trust any request
-        // to provide IP via headers.
-        //
-
-        // IP that directly contacted the server (may turn out to be a proxy)
-        $ip = getenv('REMOTE_ADDR');
-        if ($ip === '::1') { // ipv6 localhost
-            $ip = '127.0.0.1';
+        if (getenv('HTTP_X_FORWARDED_FOR')) {
+            $ip = getenv('HTTP_X_FORWARDED_FOR');
+        } else {
+            $ip = getenv('REMOTE_ADDR');
         }
-
-        // Check if $ip can be a proxy
-        $is_trusted_proxy = true;
-        $trusted_proxies = SystemConfig::systemOption('trusted_proxies');
-        if (is_array($trusted_proxies)) {
-            $trusted_proxies[] = '127.0.0.1';
-            $is_trusted_proxy = in_array($ip, $trusted_proxies);
-        }
-
-        // get client's IP from headers if allowed
-        if ($is_trusted_proxy) {
-            if (getenv('HTTP_X_FORWARDED_FOR')) {
-                // Contains a chain of proxy addresses, the last IP goes directly to the customer to contact the proxy server.
-                $ip = array_filter(array_map('trim', explode(',', getenv('HTTP_X_FORWARDED_FOR'))));
-                $ip = (string) end($ip);
-            } elseif (getenv('HTTP_CLIENT_IP')) {
-                $ip = getenv('HTTP_CLIENT_IP');
-            }
-        }
-
-        // Convert to int if needed
         if ($get_as_int) {
             $ip = ip2long($ip);
             if ($ip > 2147483647) {
                 $ip -= 4294967296;
             }
         }
-
         return $ip;
     }
 
@@ -556,37 +513,5 @@ class waRequest
             return true;
         }
         return false;
-    }
-
-    public static function getPostMaxSize()
-    {
-        return self::toBytes(ini_get('post_max_size'));
-    }
-
-    public static function getUploadMaxFilesize()
-    {
-        return min(self::getPostMaxSize(), self::toBytes(ini_get('upload_max_filesize')));
-    }
-
-    public static function toBytes($str)
-    {
-        $val = trim($str);
-        if (!$val) {
-            return 0;
-        }
-        $last = strtolower($str[strlen($str) - 1]);
-        if (wa_is_int($last)) {
-            return $val;
-        }
-        $val = @ (float) substr($val, 0, -1);
-        switch ($last) {
-            case 'g':
-                $val *= 1024;
-            case 'm':
-                $val *= 1024;
-            case 'k':
-                $val *= 1024;
-        }
-        return (int) $val;
     }
 }

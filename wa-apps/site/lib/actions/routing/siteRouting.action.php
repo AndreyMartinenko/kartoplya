@@ -15,18 +15,12 @@ class siteRoutingAction extends waViewAction
             }
         }
 
-        $domain_id = siteHelper::getDomainId();
         $this->view->assign(array(
             'routes' => $routes,
             'apps' => $apps,
-            'url' => waIdna::dec($this->getDomainUrl($domain)),
-            'domain_id' => $domain_id,
+            'url' => $this->getDomainUrl($domain),
+            'domain_id' => siteHelper::getDomainId()
         ));
-
-        $routing_errors = wa()->getConfig()->getRoutingErrors();
-        if ($routing_errors) {
-            $this->view->assign('routing_error', $routing_errors);
-        }
     }
 
     protected function getDomainUrl($domain)

@@ -3,7 +3,6 @@
 return array(
     'code' => 'MKD',
     'sign' => 'ден',
-	'iso4217' => '807',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Macedonian denar',

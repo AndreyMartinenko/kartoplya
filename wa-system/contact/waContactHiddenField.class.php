@@ -31,9 +31,4 @@ class waContactHiddenField extends waContactField
 
         return $result;
     }
-
-    public function isHidden()
-    {
-        return true;
-    }
 }

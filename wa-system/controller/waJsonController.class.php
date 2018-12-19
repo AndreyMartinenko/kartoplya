@@ -36,9 +36,10 @@ abstract class waJsonController extends waController
         }
         $this->getResponse()->sendHeaders();
         if (!$this->errors) {
-            echo waUtils::jsonEncode(array('status' => 'ok', 'data' => $this->response));
+            $data = array('status' => 'ok', 'data' => $this->response);
+            echo json_encode($data);
         } else {
-            echo waUtils::jsonEncode(array('status' => 'fail', 'errors' => $this->errors));
+            echo json_encode(array('status' => 'fail', 'errors' => $this->errors));
         }
     }
 

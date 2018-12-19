@@ -3,7 +3,6 @@
 return array(
     'code' => 'PYG',
     'sign' => '₲',
-	'iso4217' => '600',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Paraguayan guarani',

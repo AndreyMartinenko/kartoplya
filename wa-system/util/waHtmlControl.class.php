@@ -19,21 +19,12 @@ class waHtmlControl
     const CONTACT = 'contact';
     const CONTACTFIELD = 'contactfield';
     const HELP = 'help';
-    const TITLE = 'title';
     const CUSTOM = 'custom';
     const HIDDEN = 'hidden';
-    const DATETIME = 'datetime';
 
     static private $predefined_controls = array();
     static private $custom_controls = array();
     static private $instance = null;
-
-    static private $wrappers = array(
-        'title_wrapper'       => '%s:&nbsp;',
-        'description_wrapper' => '<br>%s<br>',
-        'control_wrapper'     => "%s\n%s\n%s\n",
-        'control_separator'   => "<br>",
-    );
 
     private function __construct()
     {
@@ -49,10 +40,6 @@ class waHtmlControl
             self::GROUPBOX,
             self::CONTACT,
             self::CONTACTFIELD,
-            self::HELP,
-            self::TITLE,
-            self::CUSTOM,
-            self::INTERVAL,
         );
     }
 
@@ -130,7 +117,6 @@ class waHtmlControl
             }
         } elseif (!empty($params['options_callback']) && !isset($params['options'])) {
             $params['options'] = self::getControlParams($params['options_callback']);
-            unset($params['options_callback']);
         }
 
 
@@ -183,77 +169,33 @@ class waHtmlControl
         }
 
         $params['class'][] = $type;
+        $wrappers = array(
+            'title_wrapper'       => '%s:&nbsp;',
+            'description_wrapper' => '<br>%s<br>',
+            'control_wrapper'     => "%s\n%s\n%s\n",
+            'control_separator'   => "<br>",
 
-        $original_wrappers = self::getControlWrappers($params);
+        );
+        $params = array_merge($wrappers, $params);
         self::makeId($params, $name);
         $instance = self::getInstance();
-        $passed_params = $params;
-        $ref = &$passed_params;
-        $control = $instance->$control_name($name, $ref);
-        $custom_wrappers = self::getControlCustomWrappers($ref);
-        $params = $custom_wrappers + $params;
-        self::getControlWrappers($params, $original_wrappers);
-
+        $control = $instance->$control_name($name, $params);
         if (is_array($control)) {
             $controls = array_values($control);
             $control = '';
             foreach ($controls as $id => $chunk) {
                 $control .= sprintf($params['control_wrapper'], $chunk['title'], $chunk['control'], $chunk['description']);
-                if ($control === false) {
-                    $control = "Invalid param 'control_wrapper' for {$type}:{$name}";
-                    break;
-                }
                 if ($id < count($controls)) {
                     $control .= $params['control_separator'];
                 }
             }
-        } elseif (($type !== waHtmlControl::HIDDEN)
-            &&
-            !in_array(ifset($params['subtype']), array(waHtmlControl::HIDDEN), true)
-        ) {
+        } else {
             $control = sprintf($params['control_wrapper'], self::getControlTitle($params), $control, self::getControlDescription($params));
             if ($control === false) {
                 $control = "Invalid param 'control_wrapper' for {$type}:{$name}";
             }
         }
         return $control;
-    }
-
-    private static function getControlCustomWrappers($params)
-    {
-        $wrappers = array();
-
-        foreach (self::$wrappers as $wrapper_name => $wrapper) {
-            $custom_wrapper_name = 'custom_'.$wrapper_name;
-            if (isset($params[$custom_wrapper_name])) {
-                $wrappers[$custom_wrapper_name] = $params[$custom_wrapper_name];
-            }
-        }
-        return $wrappers;
-    }
-
-    private static function getControlWrappers(&$params, $passed_wrappers = array())
-    {
-        $wrappers = array();
-
-        foreach (self::$wrappers as $wrapper_name => $wrapper) {
-            $custom_wrapper_name = 'custom_'.$wrapper_name;
-
-            if (isset($params[$wrapper_name])) {
-                $wrappers[$wrapper_name] = $params[$wrapper_name];
-            }
-
-            if (isset($params[$custom_wrapper_name])) {
-                $params[$wrapper_name] = $params[$custom_wrapper_name];
-            } else {
-                if (isset($passed_wrappers[$wrapper_name])) {
-                    $params[$wrapper_name] = $passed_wrappers[$wrapper_name];
-                } elseif (!isset($params[$wrapper_name])) {
-                    $params[$wrapper_name] = $wrapper;
-                }
-            }
-        }
-        return $wrappers;
     }
 
     /**
@@ -265,18 +207,18 @@ class waHtmlControl
         $options = null;
         if (is_array($raw_params)) {
             $callback = array_shift($raw_params);
-            if (is_object($callback) && ($class = get_class($callback))) {
-                $callback = array($callback);
-                $callback[] = array_shift($raw_params);
-                if (in_array($callback[1], get_class_methods($class))) {
-                    $options = call_user_func_array($callback, $raw_params);
-                }
-            } elseif (function_exists($callback)) {
+            if (function_exists($callback)) {
                 $options = call_user_func_array($callback, $raw_params);
             } elseif (is_string($callback) && class_exists($callback)) {
                 $callback = array($callback);
                 $callback[] = array_shift($raw_params);
                 if (in_array($callback[1], get_class_methods($callback[0]))) {
+                    $options = call_user_func_array($callback, $raw_params);
+                }
+            } elseif (is_object($callback) && ($class = get_class($callback))) {
+                $callback = array($callback);
+                $callback[] = array_shift($raw_params);
+                if (in_array($callback[1], get_class_methods($class))) {
                     $options = call_user_func_array($callback, $raw_params);
                 }
             }
@@ -312,7 +254,6 @@ class waHtmlControl
             $type = $matches[1];
             $name = array_shift($args);
             $params = array_shift($args);
-
             if (!isset($params['value'])) {
                 $params['value'] = isset($params['default']) ? $params['default'] : false;
             }
@@ -326,7 +267,7 @@ class waHtmlControl
                 return $message;
             }
         } else {
-            throw new waException("Call undefined function {$function_name} at ".__CLASS__);
+            throw new Exception("Call undefined function {$function_name} at ".__CLASS__);
         }
 
     }
@@ -344,7 +285,7 @@ class waHtmlControl
         if (is_callable($callback)) {
             self::$custom_controls[$type] = $callback;
         } else {
-            throw new waException("invalid callback for control type {$type}");
+            throw new Exception("invalid callback for control type {$type}");
         }
     }
 
@@ -361,18 +302,17 @@ class waHtmlControl
         //settings_{$name}_{$id}
         $params['id'] = $id ? $id : ((isset($params['id']) && $params['id']) ? $params['id'] : strtolower(__CLASS__));
         if (isset($params['namespace'])) {
-            $params['id'] .= '_'.implode('_', (array)$params['namespace']);
+
         }
         if ($name) {
             $params['id'] .= "_{$name}";
         } elseif ($name === false) {
             $params['id'] .= ++$counter.'_';
         }
-        $params['id'] = preg_replace(array('/[_]{2,}/', '/[_]{1,}$/'), array('_', ''), str_replace(array('[', ']', '.'), '_', $params['id']));
-        return $params['id'];
+        $params['id'] = preg_replace(array('/[_]{2,}/', '/[_]{1,}$/'), array('_', ''), str_replace(array('[', ']'), '_', $params['id']));
     }
 
-    final public static function makeNamespace($params)
+    final private static function makeNamespace($params)
     {
         $namespace = null;
         if (!empty($params['namespace'])) {
@@ -427,9 +367,9 @@ class waHtmlControl
     {
         $title = '';
         if (isset($params['title']) && !empty($params['title_wrapper'])) {
-            $option_title = self::escape(self::_wp($params['title'], $params));
-            if (!empty($params['id']) && strlen($option_title)) {
-                $params['id'] = self::escape($params['id']);
+            $option_title = htmlentities(self::_wp($params['title'], $params), ENT_QUOTES, self::$default_charset);
+            if (!empty($params['id'])) {
+                $params['id'] = htmlentities($params['id'], ENT_QUOTES, self::$default_charset);
                 $option_title = sprintf('<label for="%s">%s</label>', $params['id'], $option_title);
             }
             $title = sprintf($params['title_wrapper'], $option_title);
@@ -451,7 +391,7 @@ class waHtmlControl
     private function getInputControl($name, $params = array())
     {
         $control = '';
-        $control_name = self::escape($name);
+        $control_name = htmlentities($name, ENT_QUOTES, self::$default_charset);
         $control .= "<input id=\"{$params['id']}\" type=\"text\" name=\"{$control_name}\" ";
         if (isset($params['format_description'])) {
             $params['format_description'] = self::_wp($params['format_description']);
@@ -461,16 +401,14 @@ class waHtmlControl
             'style',
             'size',
             'maxlength',
-            'title',
             'value',
             'placeholder',
             'readonly',
-            'required',
             'disabled',
             'autocomplete',
             'autofocus',
             'format'             => 'data-regexp',
-            'format_description' => 'data-regexp-hint',
+            'format_description' => 'data-regexp-hint'
         );
         $control .= self::addCustomParams($map, $params);
         $control .= ">";
@@ -479,9 +417,9 @@ class waHtmlControl
 
     private function getHiddenControl($name, $params = array())
     {
-        $control_name = self::escape($name);
+        $control_name = htmlentities($name, ENT_QUOTES, self::$default_charset);
         $control = "<input type=\"hidden\" name=\"{$control_name}\" ";
-        $control .= self::addCustomParams(array('id', 'class', 'title', 'value', 'disabled'), $params);
+        $control .= self::addCustomParams(array('class', 'value'), $params);
         $control .= ">";
         return $control;
     }
@@ -489,36 +427,20 @@ class waHtmlControl
     private function getFileControl($name, $params = array())
     {
         $control = '';
-        $control_name = self::escape($name);
+        $control_name = htmlentities($name, ENT_QUOTES, self::$default_charset);
         $control .= "<input type=\"file\" name=\"{$control_name}\" ";
-        $control .= self::addCustomParams(array('class', 'style', 'id'), $params);
+        $control .= self::addCustomParams(array('class', 'style', 'size', 'maxlength', 'value', 'id'), $params);
         $control .= ">";
-        if (!empty($params['value'])) {
-            if (!empty($params['img_path'])) {
-                $path = wa()->getDataPath($params['img_path'], true);
-                if (file_exists($path.'/'.$params['value'])) {
-                    $url = wa()->getDataUrl($params['img_path'], true);
-                    $file = self::escape($url.$params['value'], ENT_NOQUOTES);
-                    $control .= "<br/><span><img src=\"{$file}\"></span>";
-                } else {
-                    $file = self::escape($params['value'], ENT_NOQUOTES);
-                    $control .= "<br/><span>{$file}</span>";
-                }
-            } else {
-                $file = self::escape($params['value'], ENT_NOQUOTES);
-                $control .= "<br/><span>{$file}</span>";
-            }
-        }
         return $control;
     }
 
     private function getTextareaControl($name, $params = array())
     {
         $control = '';
-        $control_name = self::escape($name);
-        $value = self::escape($params['value']);
+        $control_name = htmlentities($name, ENT_QUOTES, self::$default_charset);
+        $value = htmlentities((string)$params['value'], ENT_QUOTES, self::$default_charset);
         $control .= "<textarea name=\"{$control_name}\"";
-        $control .= self::addCustomParams(array('class', 'style', 'cols', 'rows', 'wrap', 'id', 'title', 'placeholder', 'readonly', 'autofocus', 'disabled'), $params);
+        $control .= self::addCustomParams(array('class', 'style', 'cols', 'rows', 'wrap', 'id', 'placeholder', 'readonly', 'autofocus', 'disabled'), $params);
         $control .= ">{$value}</textarea>";
 
         if (empty($params['wysiwyg']) && !empty($params['wisywig'])) {
@@ -544,15 +466,9 @@ class waHtmlControl
 </style>
 <script type="text/javascript">
     if(typeof(CodeMirror) == 'function') {
-        var textarea = document.getElementById('{$params['id']}'), 
-            onchange = {
-                'onChange':function(cm) {
-                    textarea.value = cm.getValue();
-                }
-            };
         setTimeout(function(){
-            CodeMirror.fromTextArea(textarea, $.extend($options, onchange));
-        }, 500);
+            CodeMirror.fromTextArea(document.getElementById('{$params['id']}'), {$options});
+        },500);
     }
 </script>
 HTML;
@@ -564,25 +480,11 @@ HTML;
     private function getHelpControl($name, $params = array())
     {
         $control = '';
-        $control_name = self::escape($name);
-        $value = self::escape($params['value']);
+        $control_name = htmlentities($name, ENT_QUOTES, self::$default_charset);
+        $value = htmlentities((string)$params['value'], ENT_QUOTES, self::$default_charset);
         $control .= "<p name=\"{$control_name}\"";
-        $control .= self::addCustomParams(array('id', 'class', 'style',), $params);
+        $control .= self::addCustomParams(array('class', 'style',), $params);
         $control .= ">{$value}</p>";
-        return $control;
-    }
-
-    private function getTitleControl($name, &$params = array())
-    {
-        $control = '';
-        $control_name = self::escape($name);
-        $value = self::escape($params['value']);
-        $control .= "<h3 name=\"{$control_name}\"";
-        $control .= self::addCustomParams(array('id', 'class', 'style',), $params);
-        $control .= ">{$value}</h3>";
-        if (!isset($params['custom_description_wrapper'])) {
-            $params['custom_description_wrapper'] = '<h4 class="hint">%s</h4>';
-        }
         return $control;
     }
 
@@ -595,18 +497,19 @@ HTML;
     private function getPasswordControl($name, $params = array())
     {
         $control = '';
-        $control_name = self::escape($name);
+        $control_name = htmlentities($name, ENT_QUOTES, self::$default_charset);
         $control .= "<input type=\"password\" name=\"{$control_name}\"";
-        $control .= self::addCustomParams(array('id', 'class', 'style', 'size', 'maxlength', 'title', 'value', 'placeholder', 'readonly', 'autofocus', 'disabled'), $params);
+        $control .= self::addCustomParams(array('class', 'style', 'size', 'maxlength', 'value', 'id', 'placeholder', 'readonly', 'autofocus', 'disabled'), $params);
         $control .= ">";
         return $control;
     }
 
     private function getRadiogroupControl($name, $params = array())
     {
+
         $control = '';
         $id = 0;
-        $value = self::escape($params['value']);
+        $value = htmlentities((string)$params['value'], ENT_QUOTES, self::$default_charset);
         $options = isset($params['options']) ? (is_array($params['options']) ? $params['options'] : array($params['options'])) : array();
         foreach ($options as $option) {
             ++$id;
@@ -617,15 +520,15 @@ HTML;
                 unset($params['checked']);
             }
             self::makeId($params, $name, md5($option_value));
-            $option_value = self::escape($option_value);
-            $control_name = self::escape($name);
+            $option_value = htmlentities((string)$option_value, ENT_QUOTES, self::$default_charset);
+            $control_name = htmlentities($name, ENT_QUOTES, self::$default_charset);
             $control .= "<input type=\"radio\" name=\"{$control_name}\" value=\"{$option_value}\"";
-            $control .= self::addCustomParams(array('id', 'class', 'style', 'checked', 'readonly', 'disabled',), $params + $option);
+            $control .= self::addCustomParams(array('class', 'style', 'id', 'checked', 'readonly',), $params);
             if (!empty($option['title'])) {
-                $option_title = self::escape(self::_wp($option['title'], $params));
+                $option_title = htmlentities(self::_wp($option['title'], $params), ENT_QUOTES, self::$default_charset);
                 $control .= ">&nbsp;<label";
                 $control .= self::addCustomParams(array('id' => 'for',), $params);
-                $control .= self::addCustomParams(array('description' => 'title', 'class', 'style',), $option);
+                $control .= self::addCustomParams(array('description' => 'title', 'class', 'style', 'disabled'), $option);
                 $control .= ">{$option_title}</label>\n";
             } else {
                 $control .= ">\n";
@@ -645,7 +548,7 @@ HTML;
         $id = 0;
         $options = isset($params['options']) ? (is_array($params['options']) ? $params['options'] : array($params['options'])) : array();
         $control .= "<select name=\"{$name}\" autocomplete=\"off\"";
-        $control .= self::addCustomParams(array('id', 'class', 'style', 'title', 'readonly', 'autofocus', 'disabled'), $params);
+        $control .= self::addCustomParams(array('class', 'style', 'id', 'readonly', 'autofocus', 'disabled'), $params);
         $control .= ">\n";
         $group = null;
         foreach ($options as $option) {
@@ -658,11 +561,11 @@ HTML;
                 $custom_params = self::addCustomParams(
                     array(
                         'class'       => 'group_class',
-                        'group_style' => 'style',
+                        'group_style' => 'style'
                     ),
                     $option
                 );
-                $control .= "\n<optgroup label=\"".self::escape($group)."\"".$custom_params.">\n";
+                $control .= "\n<optgroup label=\"".htmlentities($group, ENT_QUOTES, self::$default_charset)."\"".$custom_params.">\n";
             }
 
             ++$id;
@@ -671,16 +574,15 @@ HTML;
                 $params['selected'] = 'selected';
             } elseif (isset($params['selected'])) {
                 unset($params['selected']);
-                unset($params['value']);
             }
             if (isset($option['description'])) {
                 $params['description'] = $option['description'];
             }
-            $option_value = self::escape($option_value);
+            $option_value = htmlentities((string)$option_value, ENT_QUOTES, self::$default_charset);
             $control .= "<option value=\"{$option_value}\"";
             $control .= self::addCustomParams(array('selected'), $params);
             $control .= self::addCustomParams(array('class', 'style', 'disabled', 'description' => 'title',), $option);
-            $option_title = self::escape(self::_wp(ifset($option['title'], $option_value), $params));
+            $option_title = htmlentities(self::_wp(ifset($option['title'], $option_value), $params), ENT_QUOTES, self::$default_charset);
             $control .= ">{$option_title}</option>\n";
         }
         if ($group) {
@@ -739,7 +641,7 @@ HTML;
             'value' => array(
                 'from' => '',
                 'to'   => '',
-            ),
+            )
         );
         $params['value'] = array_merge($default_params['value'], $params['value']);
         $input_params = $params;
@@ -782,7 +684,7 @@ HTML;
         $control .= self::addCustomParams(array('value', 'class', 'style', 'checked', 'id', 'title', 'disabled',), $params);
         $control .= ">";
         if (isset($params['label']) && $params['label']) {
-            $control .= '&nbsp;'.self::escape(self::_wp($params['label'], $params))."</label>";
+            $control .= '&nbsp;'.htmlentities(self::_wp($params['label'], $params), ENT_QUOTES, self::$default_charset)."</label>";
         }
 
         return $control;
@@ -899,345 +801,6 @@ HTML;
 
     }
 
-    private function getDatetimeControl($name, $params = array())
-    {
-        $html = '';
-
-        $wrappers = array(
-            'title'           => '',
-            'title_wrapper'   => '%s',
-            'description'     => '',
-            'control_wrapper' => "%s\n%3\$s\n%2\$s\n",
-            'id'              => '',
-        );
-
-        $params = array_merge($params, $wrappers);
-        $available_days = array();
-        $date_params = $params;
-        $date_format = waDateTime::getFormat('date');
-        if (isset($params['params']['date'])) {
-            $date_params['style'] = "z-index: 100000;";
-
-            $date_name = preg_replace('@([^\]]+)(\]?)$@', '$1.date_str$2', $name);
-            $offset = min(365, max(0, intval(ifset($params, 'params', 'date', 0))));
-            $date_params['placeholder'] = waDateTime::getFormatHuman($date_format);
-            $date_params['description'] = _ws('Date');
-
-            $date_params['value'] = ifset($params, 'value', 'date_str', '');
-
-            $html .= waHtmlControl::getControl(waHtmlControl::INPUT, $date_name, $date_params);
-            self::makeId($date_params, $date_name);
-
-            $date_name = preg_replace('@([^\]]+)(\]?)$@', '$1.date$2', $name);
-            $date_formatted_params = $params;
-            $date_formatted_params['style'] = "display: none;";
-            $date_formatted_params['value'] = ifset($params, 'value', 'date', '');
-
-            $html .= waHtmlControl::getControl(waHtmlControl::INPUT, $date_name, $date_formatted_params);
-            self::makeId($date_formatted_params, $date_name);
-
-
-            $date_format_map = array(
-                'PHP' => 'JavaScript',
-                'Y'   => 'yy',
-                'd'   => 'dd',
-                'm'   => 'mm',
-            );
-            $js_date_format = str_replace(array_keys($date_format_map), array_values($date_format_map), $date_format);
-            $locale = wa()->getLocale();
-            $localization = sprintf("wa-content/js/jquery-ui/i18n/jquery.ui.datepicker-%s.js", $locale);
-            if (!is_readable($localization)) {
-                $localization = '';
-            }
-
-        }
-
-        $interval_params = $params;
-        if (!empty($params['params']['interval'])) {
-
-            $intervals = ifempty($params['params']['intervals'], false);
-            if (is_array($intervals)) {
-                $interval_params['options'] = array();
-                foreach ($intervals as $id => $interval) {
-                    if (is_array($interval) && isset($interval['from']) && isset($interval['to'])) {
-                        $days = ifset($interval['day'], array());
-                        $value = sprintf(
-                            '%d:%02d-%d:%02d',
-                            $interval['from'],
-                            ifset($interval['from_m'], 0),
-                            $interval['to'],
-                            ifset($interval['to_m'], 0)
-                        );
-                        $interval_params['options'][$value] = array(
-                            'value' => $value,
-                            'title' => empty($value) ? _ws('Time') : $value,
-                            'data'  => array(
-                                'days'  => array_keys($days),
-                                'value' => $value,
-                            ),
-                        );
-                        $available_days = array_merge(array_keys($days), $available_days);
-                    } else {
-                        $interval_params['options'][$id] = array(
-                            'value' => $id,
-                            'title' => empty($id)?_ws('Time'):$id,
-                            'data'  => array(
-                                'days'  => $interval,
-                                'value' => $id,
-                            ),
-                        );
-                        $available_days = array_merge(array_keys($interval), $available_days);
-                    }
-                }
-
-                $available_days = array_values(array_unique($available_days));
-            }
-
-            $interval_name = preg_replace('@([^\]]+)(\]?)$@', '$1.interval$2', $name);
-            $interval_params['description'] = _ws('Time');
-            if (isset($interval_params['options'])) {
-                $html .= ifset($params['control_separator']);
-                if (!isset($interval_params['options'][null])) {
-                    $option = array(
-                        'value' => '',
-                        'title' => _ws('Time'),
-                        'data'  => array('days' => $available_days),
-                    );
-                    array_unshift($interval_params['options'], $option);
-                }
-                $interval_params['value'] = ifset($params['value']['interval']);
-                $html .= waHtmlControl::getControl(self::SELECT, $interval_name, $interval_params);
-                self::makeId($interval_params, $interval_name);
-            } else {
-                $html .= ifset($params['control_separator']);
-                $html .= waHtmlControl::getControl(self::INPUT, $interval_name, $interval_params);
-            }
-        }
-
-
-        if (isset($params['params']['date']) && isset($offset)) {
-
-            if (empty($interval_params['id'])) {
-                $interval_params['id'] = '';
-            }
-
-            $available_days = json_encode($available_days);
-            $root_url = wa()->getRootUrl();
-            $html .= <<<HTML
-<script>
-    ( function() {
-        'use strict';
-        var id_date = '{$date_params['id']}';
-        var id_date_formatted = '{$date_formatted_params['id']}';
-        var date_input = $('#' + id_date);
-        var date_formatted = $('#' + id_date_formatted);
-        var interval = '{$interval_params['id']}' ? $('#{$interval_params['id']}') : false;
-        
-        date_input.data('available_days', {$available_days});
-
-        var initDatePicker = function () {
-            date_input.datepicker({
-                "dateFormat": '{$js_date_format}',
-                "minDate": {$offset},
-                "onSelect": function (dateText) {
-                    var d = date_input.datepicker('getDate');
-                    date_input.val(dateText);
-                    date_formatted.val($.datepicker.formatDate('yy-mm-dd', d));
-                    if (d && interval && interval.length) {
-                        /** @var int day week day (starts from 0) */
-                        var day = (d.getDay() + 6) % 7;
-                        /**
-                         * filter select by days
-                         */
-                        var value = typeof(interval.val()) !== 'undefined';
-                        var matched = null;
-                        interval.find('option').each(function () {
-                            /**
-                             * @this HTMLOptionElement
-                             */
-                            var option = $(this);
-                            var disabled = (option.data('days').indexOf(day) === -1) ? 'disabled' : null;
-                            option.attr('disabled', disabled);
-                            if (disabled) {
-                                if (this.selected) {
-                                    value = false;
-                                }
-                            } else {
-                                matched = this;
-                                if (!value) {
-                                    this.selected = true;
-                                    value = !!this.value;
-                                    if (typeof(interval.highlight) === 'function') {
-                                        interval.highlight();
-                                    }
-                                }
-                            }
-                        });
-
-                        if (value) {
-                            interval.removeClass('error');
-                        } else if (matched) {
-                            matched.selected = true;
-                            interval.removeClass('error');
-                        } else {
-                            interval.addClass('error');
-                        }
-                    }
-
-                },
-                "beforeShowDay": function (date) {
-                    if (interval && interval.length) {
-                        /** @var int day week day */
-                        var day = (date.getDay() + 6) % 7;
-                        var available_days = date_input.data('available_days')||[];
-                        return [available_days.indexOf(day) !== -1];
-                    } else {
-                        return [true];
-                    }
-                }
-            });
-
-            $(".ui-datepicker").each( function() {
-                $(this).hide().css({ zIndex: 1000 });
-            });
-        };
-
-        $(document).ready( function() {
-            if (typeof $.fn.datepicker === "function") {
-                initDatePicker();
-
-            } else {
-                load([
-                    {
-                        id: "wa-content-jquery-ui-js",
-                        type: "js",
-                        uri: "{$root_url}wa-content/js/jquery-ui/jquery-ui-1.7.2.custom.min.js"
-                    },
-                    {
-                        id: "wa-content-jquery-ui-css",
-                        type: "css",
-                        uri: "{$root_url}wa-content/css/jquery-ui/jquery-ui-1.7.2.custom.css"
-                    }
-                ]).then(function() {
-
-                    var locale = "{$locale}".substr(0, 2);
-                    if (locale === "ru") {
-                        load([{
-                            id: "wa-content-jquery-ui-locale-js",
-                            type: "js",
-                            uri: "{$root_url}{$localization}"
-                        }]).then(initDatePicker);
-                    } else {
-                        initDatePicker();
-                    }
-                    
-                });
-            }
-        });
-        
-        function load(sources) {
-                var deferred = $.Deferred();
-        
-                loader(sources).then( function() {
-                    deferred.resolve();
-                });
-        
-                return deferred.promise();
-        
-                function loader(sources) {
-                    var deferred = $.Deferred(),
-                        counter = sources.length;
-        
-                    $.each(sources, function(i, source) {
-                        switch (source.type) {
-                            case "css":
-                                loadCSS(source);
-                                break;
-                            case "js":
-                                loadJS(source);
-                                break;
-                        }
-                    });
-        
-                    return deferred.promise();
-        
-                    /**/
-        
-                    function loadCSS(source) {
-                        var link = $("#" + source.id);
-                        if (link.length) {
-                            link.data("promise").then(onLoad);
-        
-                        } else {
-                            var deferred = $.Deferred(),
-                                promise = deferred.promise();
-        
-                            link = $("<link />", {
-                                id: source.id,
-                                rel: "stylesheet"
-                            }).appendTo("head")
-                                .data("promise", promise);
-        
-                            link.on("load", function() {
-                                onLoad();
-                                deferred.resolve();
-                            });
-        
-                            link.attr("href", source.uri);
-                        }
-        
-                        function onLoad() {
-                            counter -= 1;
-                            watcher();
-                        }
-                    }
-        
-                    function loadJS(source) {
-                        var script = $("#" + source.id);
-                        if (script.length) {
-                            script.data("promise").then(onLoad);
-        
-                        } else {
-                            var deferred = $.Deferred(),
-                                promise = deferred.promise(),
-                                script = document.createElement("script");
-                                
-                            document.getElementsByTagName("head")[0].appendChild(script);
-        
-                            script = $(script)
-                                .attr("id", source.id)
-                                .data("promise", promise);
-        
-                            script.on("load", function () {
-                                onLoad();
-                                deferred.resolve();
-                            });
-        
-                            script.attr("src", source.uri);
-                        }
-        
-                        function onLoad() {
-                            counter -= 1;
-                            watcher();
-                        }
-                    }
-        
-                    function watcher() {
-                        if (counter === 0) {
-                            deferred.resolve();
-                        }
-                    }
-                }
-            }
-    })();
-</script>
-
-HTML;
-        }
-
-        return $html;
-    }
-
     /**
      * @todo complete params check
      * @param $name
@@ -1256,15 +819,15 @@ HTML;
             if (is_array($callback)) {
                 if (is_object($callback[0])) {
                     if (!method_exists($callback[0], $callback[1])) {
-                        throw new waException("Method {$callback[1]} not exists at class ".get_class($callback[0]));
+                        throw new Exception("Method {$callback[1]} not exists at class ".get_class($callback[0]));
                     }
                 } elseif (!class_exists($callback[0])) {
-                    throw new waException("Class {$callback[0]} not found");
+                    throw new Exception("Class {$callback[0]} not found");
                 }
                 //TODO check method exists
             } else {
                 if (!function_exists($callback)) {
-                    throw new waException("Function {$callback} not found");
+                    throw new Exception("Function {$callback} not found");
                 }
             }
             return call_user_func_array($callback, array($name, $params));
@@ -1295,12 +858,12 @@ HTML;
                     }
                 }
                 if ($param_value !== false) {
-                    if (in_array($param, array('title', 'description', 'placeholder'))) {
+                    if (in_array($param, array('title', 'description'))) {
                         $param_value = self::_wp($param_value, $params);
                     } elseif (in_array($param, array('disabled', 'readonly'))) {
                         $param_value = $param;
                     }
-                    $param_value = self::escape($param_value);
+                    $param_value = htmlentities((string)$param_value, ENT_QUOTES, self::$default_charset);
                     if (in_array($param, array('autofocus'))) {
                         $params_string .= " {$target}";
                     } else {
@@ -1309,21 +872,8 @@ HTML;
                 }
             }
         }
-        if (!empty($params['data'])) {
-            $data = array();
-            foreach ($params['data'] as $field => $value) {
-                $data['data-'.$field] = trim(json_encode($value), '"');
-            }
-            $params_string .= $this->addCustomParams(array_keys($data), $data);
-        }
         return $params_string;
     }
-
-    protected static function escape($string, $quote_style = ENT_QUOTES)
-    {
-        return htmlentities((string)$string, $quote_style, self::$default_charset);
-    }
-
 
     private static function _wp($param, $params = array())
     {

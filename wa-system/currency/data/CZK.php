@@ -3,7 +3,6 @@
 return array(
     'code' => 'CZK',
     'sign' => 'Kč',
-	'iso4217' => '203',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Czech koruna',

@@ -3,7 +3,6 @@
 return array(
     'code' => 'HUF',
     'sign' => 'Ft',
-	'iso4217' => '348',
     'sign_position' => null,
     'sign_delim' => null,
     'title' => 'Hungarian forint',

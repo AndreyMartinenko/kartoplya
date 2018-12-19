@@ -13,11 +13,11 @@ class webasystCreateActionCli extends waCliController
     public function execute()
     {
         if (!waRequest::param(2) || null !== waRequest::param('help')) {
-            $this->showHelp();
-        } else {
-            list($app_id, $module, $action_type, $action_names) = $this->getParameters();
-            $this->create($app_id, $module, $action_type, $action_names);
+            return $this->showHelp();
         }
+
+        list($app_id, $module, $action_type, $action_names) = $this->getParameters();
+        $this->create($app_id, $module, $action_type, $action_names);
     }
 
     protected function showHelp()
@@ -79,19 +79,10 @@ HELP;
         if ($action_type == 'action' || $action_type == 'actions') {
             $template_path = wa()->getAppPath('templates/actions/'.$module.'/', $app_id);
             waFiles::create($template_path);
-            foreach ($action_names as $action_name) {
+            foreach($action_names as $action_name) {
                 $template_filename = $this->getTemplateFilename($module, $action_type, $action_name);
                 if (!file_exists($template_path.$template_filename)) {
-                    $template = <<<HTML
-<h1>Hello, World!</h1><!-- !!! TODO FIXME -->
-
-
-<p>{$action_path}{$action_filename}</p>
-<p>{$template_path}{$template_filename}</p>
-
-HTML;
-
-                    file_put_contents($template_path.$template_filename, $template);
+                    file_put_contents($template_path.$template_filename, "<h1>Hello, World!</h1> <!-- !!! TODO FIXME -->\n\n<p>{$action_path}{$action_filename}</p>\n<p>{$template_path}{$template_filename}</p>");
                     $files_created[] = $template_path.$template_filename;
                 } else {
                     print sprintf("File already exists: %s\n", $template_path.$template_filename);
@@ -109,13 +100,13 @@ HTML;
     protected function getPhpWrap($app_id, $module, $action_type, $action_names)
     {
         $parent_class_name = self::$class_names[$action_type];
-        switch ($action_type) {
+        switch($action_type) {
             case 'jsons':
             case 'actions':
-                $class_name = $app_id.ucfirst($module).'Actions';
+                $class_name = $app_id . ucfirst($module) . 'Actions';
                 break;
             default: // json jsons action long
-                $class_name = $app_id.ucfirst($module);
+                $class_name = $app_id . ucfirst($module);
                 if ($action_names[0] != 'default') {
                     $class_name .= ucfirst($action_names[0]);
                 }
@@ -126,23 +117,16 @@ HTML;
                 }
                 break;
         }
-        return <<<PHP
-<?php
-class {$class_name} extends {$parent_class_name}
-{
-%CLASS_CONTENT%
-}
-
-PHP;
+        return "<?php\nclass {$class_name} extends {$parent_class_name}\n{\n%CLASS_CONTENT%\n}\n";
     }
 
     protected function getPhpInner($action_type, $action_names)
     {
         $methods = array();
-        switch ($action_type) {
+        switch($action_type) {
             case 'jsons':
             case 'actions':
-                foreach ($action_names as $action_name) {
+                foreach($action_names as $action_name) {
                     $methods[] = 'protected function '.$action_name.'Action()';
                 }
                 break;
@@ -159,7 +143,7 @@ PHP;
         }
 
         $result = array();
-        foreach ($methods as $m) {
+        foreach($methods as $m) {
             $result[] = "\t{$m}\n\t{\n\t\t// !!! TODO\n\t}";
         }
 
@@ -168,12 +152,12 @@ PHP;
 
     protected function getPhpFilename($app_id, $module, $action_type, $action_names)
     {
-        switch ($action_type) {
+        switch($action_type) {
             case 'jsons':
             case 'actions':
-                return $app_id.ucfirst($module).'.actions.php';
+                return $app_id . ucfirst($module) . '.actions.php';
             default: // json jsons action long
-                $file_name = $app_id.ucfirst($module);
+                $file_name = $app_id . ucfirst($module);
                 if ($action_names[0] != 'default') {
                     $file_name .= ucfirst($action_names[0]);
                 }
@@ -214,8 +198,8 @@ PHP;
         // Get action type and names
         if (!waRequest::param(3)) {
             $action_type = 'action';
-            $action_names = array(waRequest::param(2));
-            if (!preg_match('~^[a-zA-Z][a-zA-Z0-9_]*$~', $action_names[0])) {
+            $action_names = array(strtolower(waRequest::param(2)));
+            if (!preg_match('~^[a-z][a-z0-9_]*$~', $action_names[0])) {
                 $this->dieWithErrors(array(
                     'Incorrect action name: '.$action_names[0],
                 ));
@@ -230,8 +214,8 @@ PHP;
 
             $action_names = array();
             for ($i = 3; waRequest::param($i); $i++) {
-                $action_name = waRequest::param($i);
-                if (!preg_match('~^[a-z][a-zA-Z0-9_]*$~', $action_name)) {
+                $action_name = strtolower(waRequest::param($i));
+                if (!preg_match('~^[a-z][a-z0-9_]*$~', $action_name)) {
                     $this->dieWithErrors(array(
                         'Incorrect action name: '.$action_name,
                     ));
@@ -258,4 +242,5 @@ PHP;
         print implode("\n", $errors);
         exit;
     }
+
 }

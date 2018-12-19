@@ -113,21 +113,14 @@ class waSmarty3View extends waView
     {
         waConfig::set('current_smarty', $this);
         $this->prepare();
-        $is_template = waConfig::get('is_template');
-        waConfig::set('is_template', true);
-        $result = $this->smarty->fetch($template, $cache_id);
-        waConfig::set('is_template', $is_template);
-        return $result;
+        return $this->smarty->fetch($template, $cache_id);
     }
 
     public function display($template, $cache_id = null)
     {
         waConfig::set('current_smarty', $this);
         $this->prepare();
-        $is_template = waConfig::get('is_template');
-        waConfig::set('is_template', true);
         $this->smarty->display($template, $cache_id);
-        waConfig::set('is_template', $is_template);
     }
 
     public function templateExists($template)

@@ -2,6 +2,11 @@
 
 class waFileCacheAdapter extends waCacheAdapter
 {
+    /**
+     * @var Memcached
+     */
+    protected static $memcached;
+
     protected function init()
     {
         if (!isset($this->options['path'])) {
@@ -12,13 +17,13 @@ class waFileCacheAdapter extends waCacheAdapter
     public function key($key, $app_id, $group = null)
     {
         $key = trim($key, '/');
-        if ($group === true) {
-            return $app_id.'/cache/g_'.$key;
-        } elseif (!$group) {
-            return $app_id.'/cache/k_'.$key.'.slz';
+        if (!$group || $group === true) {
+            return $app_id.'/cache/k_'. $key.'.slz';
+        } else {
+            return $app_id.'/cache/g_'.$group.'/'.$key.'.slz';
         }
-        return $app_id.'/cache/g_'.$group.'/'.$key.'.slz';
     }
+
 
     public function get($key)
     {

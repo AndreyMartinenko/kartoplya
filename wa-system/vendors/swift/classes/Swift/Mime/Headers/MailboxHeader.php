@@ -328,7 +328,6 @@ class Swift_Mime_Headers_MailboxHeader extends Swift_Mime_Headers_AbstractHeader
         foreach ($mailboxes as $email => $name) {
             $mailboxStr = $email;
             if (!is_null($name)) {
-                $name = $this->removeInvalidCharacters($name);
                 $nameStr = $this->createDisplayNameString($name, empty($strings));
                 $mailboxStr = $nameStr . ' <' . $mailboxStr . '>';
             }
@@ -336,11 +335,6 @@ class Swift_Mime_Headers_MailboxHeader extends Swift_Mime_Headers_AbstractHeader
         }
 
         return $strings;
-    }
-
-    protected function removeInvalidCharacters($str)
-    {
-        return str_replace(array("<", ">", '"'), "", $str);
     }
 
     /**
@@ -352,11 +346,13 @@ class Swift_Mime_Headers_MailboxHeader extends Swift_Mime_Headers_AbstractHeader
      */
     private function _assertValidAddress($address)
     {
-        if (!Swift_Validate::email($address))
+        if (!preg_match('/^' . $this->getGrammar()->getDefinition('addr-spec') . '$/D',
+            $address))
         {
             throw new Swift_RfcComplianceException(
-                'Address in mailbox given [' . $address . '] is not a valid Email address (RFC 2822)'
-            );
+                'Address in mailbox given [' . $address .
+                '] does not comply with RFC 2822, 3.6.2.'
+                );
         }
     }
 }

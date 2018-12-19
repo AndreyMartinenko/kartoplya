@@ -27,14 +27,6 @@ abstract class waAuthAdapter
         return isset($this->options[$name]) ? $this->options[$name] : $default;
     }
 
-    /**
-     * @return mixed
-     * @throws waAuthException
-     * @throws waAuthInvalidCredentialsException
-     * @throws waAuthConfirmEmailException
-     * @throws waAuthConfirmPhoneException
-     * @throws waException
-     */
     abstract public function auth();
 
     public function getId()
@@ -49,11 +41,9 @@ abstract class waAuthAdapter
         return ucfirst(substr($class, 0, -4));
     }
 
-    public function getIcon($prefix = 'circle', $ext = 'svg')
+    public function getIcon()
     {
-        $prefix = $prefix ? '-'.htmlspecialchars($prefix) : null;
-        $ext = $ext === 'png' ? 'png' : 'svg';
-        return wa()->getRootUrl().'wa-content/img/auth/'.$this->getId().$prefix.'.'.$ext;
+        return wa()->getRootUrl().'wa-content/img/auth/'.$this->getId().'.png';
     }
 
     public function getUrl()

@@ -1,5 +1,4 @@
 <?php
-
 $path = dirname(__FILE__).'/wa-config/SystemConfig.class.php';
 
 if (file_exists($path)) {
@@ -13,3 +12,5 @@ if (file_exists($path)) {
         //404
     }
 }
+
+echo "helooo ";

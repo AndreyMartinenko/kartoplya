@@ -3,7 +3,6 @@
 return array(
     'code' => 'AUD',
     'sign' => '$',
-	'iso4217' => '36',
     'sign_position' => 0,
     'sign_delim' => '',
     'title' => 'Australian dollar',

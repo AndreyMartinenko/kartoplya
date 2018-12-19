@@ -1,0 +1,110 @@
+{literal}
+<style>
+.wa-error {border: 2px solid red;}
+.wa-error-msg {font-size: 0.9em; color: red;}
+</style>
+{/literal}
+<form action="" method="post">
+<div class="block double-padded">
+    <h1 style="margin-bottom:20px;">[`Settings`]</h1>
+
+    <p><label>
+        <input id="show_captcha" type="checkbox" name="settings[show_captcha]" value="1" {if $settings['show_captcha'] == 1} checked="true"{/if}>
+        [`Ask to enter numbers from CAPTCHA image`]
+    </label></p>
+
+    <p><label>
+        <input id="google_captcha" type="checkbox" name="settings[google_captcha]" value="1" {if $settings['google_captcha'] == 1} checked="true"{/if}{if $settings['show_captcha'] != 1} disabled{/if}>
+        [`Использовать Google ReCaptcha`]
+        <span class="hint">[`Иначе будет использована капча Webasyst`]</span>
+    </label></p>
+
+    <p><label>
+        [`Google ReCaptcha Site Key`]
+        <input id="site_key" type="text" name="settings[site_key]" value="{$settings.site_key}"{if $settings['google_captcha'] != 1} disabled{/if} style="width: 350px;">
+    </label></p>
+
+    <p><label>
+        [`Google ReCaptcha Secret Key`]
+        <input id="secret_key" type="text" name="settings[secret_key]" value="{$settings.secret_key}"{if $settings['google_captcha'] != 1} disabled{/if} style="width: 350px;">
+    </label></p>
+
+    <p><label>
+        <input type="checkbox" name="settings[require_email]" value="1" {if $settings['require_email'] == 1} checked="true"{/if}>
+        [`Ask the user to enter email`]
+        <span class="hint">[`Only for unregistered users`]</span>
+    </label></p>
+
+    <p><label>
+        <input type="checkbox" name="settings[auth_only]" value="1" {if $settings['auth_only'] == 1} checked="true"{/if}>
+        [`Only registered users can post reviews`]
+    </label></p>
+
+    <p><label>
+        <input type="checkbox" name="settings[avatar]" value="1" {if $settings['avatar'] == 1} checked="true"{/if}>
+        [`Show user avatar`]
+    </label></p>
+
+    <p><label>
+        <input type="checkbox" name="settings[gravatar]" value="1" {if $settings['gravatar'] == 1} checked="true"{/if}>
+        [`Use avatars from service gravatar.com`]
+    </label></p>
+
+    <p><label>
+        <input type="checkbox" name="settings[lazyloading]" value="1" {if $settings['lazyloading'] == 1} checked="true"{/if}>
+        [s`Lazyloading`]
+    </label></p>
+
+    <p><label>
+        <input id="ajax" type="checkbox" name="settings[ajax]" value="1" {if $settings['ajax'] == 1} checked="true"{/if}>
+        [`Use ajax form`]
+    </label></p>
+
+    <p><label>
+        [`Reviews per page:`]
+        <input type="text" name="settings[pagination]" {if !empty($errors.pagination)} class="wa-error" {/if} value="{$settings.pagination|escape}">
+        {if !empty($errors.pagination)}<em class="wa-error-msg">[`Invalid number`]</em>{/if}
+    </label></p>
+
+    <p><label>
+        <input type="checkbox" name="settings[validation]" value="1" {if $settings['validation'] == 1} checked="true"{/if}>
+        [`Enable validation`]
+    </label></p>
+
+    <p>
+        <label>
+            <input type="checkbox" id="send_email" name="settings[send_email]" value="1" {if $settings['send_email'] == 1} checked="true"{/if}>
+            [`Send emails about new reviews by email:`]
+        </label>
+        <input id="email" type="text" {if !empty($errors.recipient)} class="wa-error" {/if} name="settings[recipient]" value="{$settings.recipient|escape}" {if $settings['send_email'] != 1} disabled {/if}>
+        {if !empty($errors.recipient)}<em class="wa-error-msg">[`Invalid Email`]</em>{/if}
+    </p>
+
+    <input type="submit" class="button green" value="[s`Save`]">
+</div>
+
+<script>
+$('#send_email').change(function () {
+    if ($('#send_email').prop("checked")) {
+      $('#email').removeAttr('disabled');
+    } else {
+      $('#email').attr('disabled','disabled');
+    }
+});
+$('#show_captcha').change(function () {
+    if ($('#show_captcha').prop("checked")) {
+      $('#google_captcha').removeAttr('disabled');
+    } else {
+      $('#google_captcha').attr('disabled','disabled');
+    }
+});
+$('#google_captcha').change(function () {
+    if ($('#google_captcha').prop("checked")) {
+      $('#site_key').removeAttr('disabled');
+      $('#secret_key').removeAttr('disabled');
+    } else {
+      $('#site_key').attr('disabled','disabled');
+      $('#secret_key').attr('disabled','disabled');
+    }
+});
+</script>

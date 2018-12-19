@@ -5,7 +5,7 @@ return array(
         'content' => array('text', 'null' => 0),
         'create_datetime' => array('datetime', 'null' => 0),
         'description' => array('text', 'null' => 0),
-        'sort' => array('int', 11, 'null' => 0, 'default' => '0'),
+        'sort' => array('int', 11, 'null' => 0, 'default' => 0),
         ':keys' => array(
             'PRIMARY' => 'id',
         ),
@@ -33,8 +33,8 @@ return array(
         'create_datetime' => array('datetime', 'null' => 0),
         'update_datetime' => array('datetime', 'null' => 0),
         'create_contact_id' => array('int', 11, 'null' => 0),
-        'sort' => array('int', 11, 'null' => 0, 'default' => '0'),
-        'status' => array('tinyint', 1, 'null' => 0, 'default' => '0'),
+        'sort' => array('int', 11, 'null' => 0, 'default' => 0),
+        'status' => array('tinyint', 1, 'null' => 0, 'default' => 0),
         'parent_id' => array('int', 11),
         ':keys' => array(
             'PRIMARY' => 'id',

@@ -78,11 +78,9 @@ class sitePersonalAction extends waViewAction
             'other' => $apps_other
         ));
 
-        $this->view->assign(array(
-            'domain_id'    => siteHelper::getDomainId(),
-            'auth_enabled' => !empty($auth_config['auth']),
-            'auth_app'     => ifset($auth_config['app']),
-        ));
+        $this->view->assign('domain_id', siteHelper::getDomainId());
+        $this->view->assign('auth_enabled', !empty($auth_config['auth']));
+        $this->view->assign('auth_app', ifset($auth_config['app']));
 
         $this->template = wa()->getAppPath($this->getTemplate(), 'site');
     }

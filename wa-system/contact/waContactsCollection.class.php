@@ -187,8 +187,6 @@ class waContactsCollection
                 } elseif ($f == 'photo_url' || substr($f, 0, 10) == 'photo_url_') {
                     $required_fields['photo'] = 'c';
                     $this->post_fields['_internal'][] = $f;
-                } elseif ($f == '_event') {
-                    $this->post_fields['_internal'][] = $f;
                 } else {
                     $this->post_fields['data'][] = $f;
                 }
@@ -222,19 +220,14 @@ class waContactsCollection
      */
     public function getContacts($fields = "id", $offset = 0, $limit = 50)
     {
-        $sql = "SELECT ".$this->getFields($fields)."\n".$this->getSQL();
-        $sql .= "\n".$this->getGroupBy();
-        $sql .= "\n".$this->getHaving();
-        $sql .= "\n".$this->getOrderBy();
-        $sql .= "\nLIMIT ".($offset ? $offset.',' : '').(int)$limit;
+        $sql = "SELECT ".$this->getFields($fields)." ".$this->getSQL();
+        $sql .= $this->getGroupBy();
+        $sql .= $this->getHaving();
+        $sql .= $this->getOrderBy();
+        $sql .= " LIMIT ".($offset ? $offset.',' : '').(int)$limit;
         //header("X-SQL-". mt_rand() . ": ". str_replace("\n", " ", $sql));
         $data = $this->getModel()->query($sql)->fetchAll('id');
         $ids = array_keys($data);
-
-        // Update group and category count, if needed
-        if ($offset == 0 && $this->update_count && $limit > count($data) && count($data) != $this->update_count['count']) {
-            $this->update_count['model']->updateCount($this->update_count['id'], count($data));
-        }
 
         //
         // Load fields from other storages
@@ -254,7 +247,7 @@ class waContactsCollection
 
             foreach ($this->post_fields as $table => $fields) {
                 if ($table == '_internal') {
-                    foreach (array_unique($fields) as $f) {
+                    foreach ($fields as $f) {
                         /**
                          * @var $f string
                          */
@@ -272,28 +265,25 @@ class waContactsCollection
                         } else {
                             switch($f) {
                                 case '_online_status':
+
                                     $llm = new waLoginLogModel();
+                                    $contact_ids_map = $llm->select('DISTINCT contact_id')->where('datetime_out IS NULL')->fetchAll('contact_id');
                                     $timeout = waUser::getOption('online_timeout');
-                                    $contact_ids_map = $llm->select('DISTINCT contact_id')
-                                        ->where('contact_id IN (?)', array($ids))
-                                        ->where('datetime_out IS NULL')
-                                        ->fetchAll('contact_id');
                                     foreach($data as &$v) {
-                                        $v['_online_status'] = 'offline';
-                                        // Ever logged in?
                                         if (isset($v['last_datetime']) && $v['last_datetime'] && $v['last_datetime'] != '0000-00-00 00:00:00') {
-                                            // Were active in the last 5 minutes?
-                                            if (time() - strtotime($v['last_datetime']) < $timeout) {
-                                                // Make sure user didn't log out
-                                                if (isset($contact_ids_map[$v['id']])) {
-                                                    $v['_online_status'] = 'online';
-                                                }
-                                            }
-                                        }
+                                              if (time() - strtotime($v['last_datetime']) < $timeout) {
+                                                  if (isset($contact_ids_map[$v['id']])) {
+                                                      $v['_online_status'] = 'online';
+                                                  } else {
+                                                      $v['_online_status'] = 'offline';
+                                                  }
+                                              }
+                                          }
+                                          $v['_online_status'] = 'offline';
                                     }
                                     unset($v);
-                                    break;
 
+                                    break;
                                 case '_access':
                                     $rm = new waContactRightsModel();
                                     $accessStatus = $rm->getAccessStatus($ids);
@@ -306,26 +296,6 @@ class waContactsCollection
                                     }
                                     unset($v);
                                     break;
-
-                                case '_event':
-                                    $cem = new waContactEventsModel();
-                                    $events = $cem->getEventByContact($ids);
-                                    $events_by_contacts = array();
-                                    foreach ($events as $id=>$e) {
-                                        if (empty($events_by_contacts[$e['contact_id']])) {
-                                            $events_by_contacts[$e['contact_id']] = $e;
-                                        }
-                                    }
-                                    foreach($data as $id => &$v) {
-                                        if (!isset($events_by_contacts[$id])) {
-                                            $v['_event'] = '';
-                                            continue;
-                                        }
-                                        $v['_event'] = $events_by_contacts[$id];
-                                    }
-                                    unset($v);
-                                    break;
-
                                 default:
                                     throw new waException('Unknown internal field: '.$f);
                             }
@@ -350,7 +320,7 @@ class waContactsCollection
                         if (!($f = waContactFields::get($field_id))) {
                             continue;
                         }
-                        if (!empty($value[0]) && !$f->isMulti()) {
+                        if (!$f->isMulti()) {
                             $post_data[$contact_id][$field_id] = isset($value[0]['data']) ? $value[0]['data'] :
                                 (is_array($value[0]) ? $value[0]['value'] : $value[0]);
                         }
@@ -374,6 +344,7 @@ class waContactsCollection
         return $data;
     }
 
+
     public function prepare($new = false, $auto_title = true)
     {
         if (!$this->prepared || $new) {
@@ -389,14 +360,14 @@ class waContactsCollection
                         'new'        => $new,
                     );
                     /**
-                    * @event contacts_collection
-                    * @param array [string]mixed $params
-                    * @param array [string]waContactsCollection $params['collection']
-                    * @param array [string]boolean $params['auto_title']
-                    * @param array [string]boolean $params['new']
-                    * @return bool null if ignored, true when something changed in the collection
-                    */
-                    $processed = array_filter(wa()->event(array('contacts', 'contacts_collection'), $params));
+                * @event contacts_collection
+                * @param array [string]mixed $params
+                * @param array [string]waContactsCollection $params['collection']
+                * @param array [string]boolean $params['auto_title']
+                * @param array [string]boolean $params['new']
+                * @return bool null if ignored, true when something changed in the collection
+                */
+                    $processed = wa()->event(array('contacts', 'contacts_collection'), $params);
                     if (!$processed) {
                         $this->where[] = 0;
                     }
@@ -425,8 +396,6 @@ class waContactsCollection
         }
         if ($ids) {
             $this->where[] = "c.id IN (".implode(",", $ids).")";
-        } else {
-            $this->where[] = "0=1";
         }
     }
 
@@ -440,7 +409,6 @@ class waContactsCollection
 
         // `&` can be escaped in search request. Need to split by not escaped ones only.
         $escapedBS = 'ESCAPED_BACKSLASH';
-        //If the user added to the request "ESCAPED_BACKSLASH" need to make it unique
         while(FALSE !== strpos($query, $escapedBS)) {
             $escapedBS .= rand(0, 9);
         }
@@ -448,8 +416,6 @@ class waContactsCollection
         while(FALSE !== strpos($query, $escapedAmp)) {
             $escapedAmp .= rand(0, 9);
         }
-
-        //Replace escaped ampersand and backslash to text 'ESCAPED_AMPERSAND' and 'ESCAPED_BACKSLASH'
         $query = str_replace('\\&', $escapedAmp, str_replace('\\\\', $escapedBS, $query));
         $query = explode('&', $query);
 
@@ -459,7 +425,6 @@ class waContactsCollection
             if (! ( $part = trim($part))) {
                 continue;
             }
-            //Return backslash and ampersand to query part
             $part = str_replace(array($escapedBS, $escapedAmp), array('\\', '&'), $part);
             $parts = preg_split("/(\\\$=|\^=|\*=|==|!=|>=|<=|=|>|<|@=)/uis", $part, 2, PREG_SPLIT_DELIM_CAPTURE);
 
@@ -469,15 +434,13 @@ class waContactsCollection
                     $cond = array();
                     foreach ($t_a as $t) {
                         $t = trim($t);
-                        if (strlen($t) > 0) {
+                        if ($t) {
                             $t = $model->escape($t, 'like');
                             $cond[] = "c.name LIKE '%{$t}%'";
                         }
                     }
-                    if ($cond) {
-                        $this->addWhere(implode(" AND ", $cond));
-                        $title[] = _ws('Name').$parts[1].$parts[2];
-                    }
+                    $this->addWhere(implode(" AND ", $cond));
+                    $title[] = _ws('Name').$parts[1].$parts[2];
                 } else if ($parts[0] == 'email') {
                     if (!isset($this->joins['email'])) {
                         $this->joins['email'] = array(
@@ -609,6 +572,7 @@ class waContactsCollection
         }
     }
 
+
     public function addTitle($title, $delim = ', ')
     {
         if (!$title && $title !== '0' && $title !== 0) {
@@ -652,30 +616,9 @@ class waContactsCollection
 
     protected function usersPrepare($params, $auto_title = true)
     {
-        $this->where[] = 'c.login IS NOT NULL';
-        if ($params == 'banned') {
-            $this->where[] = 'c.is_user = -1';
-        } else if ($params == 'active_and_banned') {
-            $this->where[] = 'c.is_user <> 0';
-        } else {
-            $this->where[] = 'c.is_user = 1';
-        }
+        $this->where[] = 'c.is_user = 1';
         if ($auto_title) {
             $this->addTitle(_ws('All users'));
-        }
-    }
-
-    protected function companyPrepare($params, $auto_title = true)
-    {
-
-        $params = array_filter(array_map('intval', explode(',', $params)));
-        if ($params) {
-            $this->where[] = "c.company_contact_id IN ('".join("','", $params)."')";
-        } else {
-            $this->where[] = '0';
-        }
-        if ($auto_title) {
-            $this->addTitle(_ws('Company'));
         }
     }
 
@@ -697,12 +640,11 @@ class waContactsCollection
             );
         }
 
-        $this->where[] = "cg.group_id = ".(int)$id;
-        $this->where[] = "c.is_user > 0";
         $this->joins[] = array(
             'table' => 'wa_user_groups',
             'alias' => 'cg',
         );
+        $this->where[] = "cg.group_id = ".(int)$id;
     }
 
 
@@ -856,7 +798,7 @@ class waContactsCollection
             if (!empty($where['_or'])) {
                 $where['_or'] = "(" . implode(" OR ", $where['_or']) . ")";
             }
-            $sql .= "\nWHERE ".implode(" AND ", $where);
+            $sql .= " WHERE ".implode(" AND ", $where);
         }
 
         return $sql;

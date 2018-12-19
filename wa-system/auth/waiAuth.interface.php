@@ -14,13 +14,6 @@
  */
 interface waiAuth
 {
-    /**
-     * @throws waAuthException
-     * @throws waAuthInvalidCredentialsException
-     * @throws waAuthConfirmEmailException
-     * @throws waAuthConfirmPhoneException
-     * @throws waException
-     */
     public function auth();
     public function isAuth();
     public function clearAuth();

@@ -3,7 +3,6 @@
 return array(
     'code' => 'TWD',
     'sign' => '$',
-	'iso4217' => '901',
     'sign_position' => 0,
     'sign_delim' => '',
     'title' => 'New Taiwan dollar',

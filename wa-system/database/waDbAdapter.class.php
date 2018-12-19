@@ -40,13 +40,9 @@ abstract class waDbAdapter
 
     abstract public function connect($settings);
 
-    /**
-     * @param $database
-     * @return bool
-     */
     public function select_db($database)
     {
-        return false;
+
     }
 
     abstract public function close();

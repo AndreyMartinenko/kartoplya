@@ -1,0 +1,169 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WebAsyst\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2015-09-15 15:36+0300\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((((n%10)==1)&&((n%100)!=11))?(0):(((((n"
+"%10)>=2)&&((n%10)<=4))&&(((n%100)<10)||((n%100)>=20)))?(1):2));\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: .\n"
+"Language: ru\n"
+"X-Generator: Poedit 1.6.9\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: .\n"
+
+msgid "Reviews"
+msgstr "Отзывы"
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid "Name"
+msgstr "Имя"
+
+msgid "Message"
+msgstr "Сообщение"
+
+msgid "Post"
+msgstr "Написать"
+
+msgid "Invalid Name"
+msgstr "Укажите Ваше имя"
+
+msgid "Invalid CAPTCHA"
+msgstr "Капча введена неверно"
+
+msgid "Invalid Message"
+msgstr "Укажите текст сообщения"
+
+msgid "Invalid Email"
+msgstr "Укажите email"
+
+msgid "Log in"
+msgstr "Вход"
+
+msgid "Sign up"
+msgstr "Регистрация"
+
+msgid "Ask the user to enter email"
+msgstr "Просить пользователя ввести Email"
+
+msgid "Only for unregistered users"
+msgstr "Только для незарегистрированных пользователей"
+
+msgid "Show user avatar on reviews page"
+msgstr "Показывать аватарку пользователя на странице отзывов"
+
+msgid "Reviews per page:"
+msgstr "Кол-во отзывов на странице:"
+
+msgid "Enable validation"
+msgstr "Включить премодерацию"
+
+msgid "Only registered users can write reviews."
+msgstr "Только зарегистрированные пользователи могут оставлять отзывы."
+
+msgid "It will be added after moderation."
+msgstr "Оно будет добавлено после прохождения модерации."
+
+msgid ""
+"You can enable logging for user settings of the framework, or enable the "
+"ability to leave messages for registered users."
+msgstr ""
+"Включите регистрацию пользователей в настройках фреймворка или включите "
+"возможность оставлять сообщения не зарегистрированным пользователям."
+
+msgid ""
+"You are not authorized! If You have already registered please log in to send "
+"messages from your account!"
+msgstr ""
+"Вы не авторизованы! Если Вы уже зарегистрированы - авторизуйтесь, чтобы "
+"отправить сообщения со своего аккаунта!"
+
+msgid ""
+"There are still no reviews. Place the code {$wa->easyreviews->show()} on any "
+"page of the website to add her comments."
+msgstr ""
+"Здесь еще нет ни одного отзыва. Разместите код {$wa->easyreviews->show()} на "
+"любой странице сайта, чтобы добавить на неё отзывы."
+
+msgid ""
+"Place the code {$wa->easyreviews->show()} on any page of the website to add "
+"her comments."
+msgstr ""
+"Разместите код {$wa->easyreviews->show()} на любой странице сайта, чтобы "
+"добавить на неё отзывы."
+
+msgid "Ask to enter numbers from CAPTCHA image"
+msgstr "Просить ввести число с картинки (CAPTCHA)"
+
+msgid "Only registered users can post reviews"
+msgstr "Только зарегистрированные пользователи могут оставлять сообщения"
+
+msgid "There are still no reviews. You can be the first!"
+msgstr "Здесь еще нет ни одного отзыва. Вы можете стать первым!"
+
+msgid "Show user avatar"
+msgstr "Показывать аватар пользователя"
+
+msgid "Send emails about new reviews by email:"
+msgstr "Отправлять письма о новых отзывах на почту:"
+
+msgid "Developed by a team Easyweb"
+msgstr "Разработано командой Easyweb"
+
+msgid "Information page of the application"
+msgstr "Информационная страница приложения"
+
+msgid "Latest reviews"
+msgstr "Последние отзывы"
+
+msgid "Text"
+msgstr "Текст"
+
+msgid "New review added to page"
+msgstr "Новый отзыв добавлен на страницу"
+
+msgid "New review added"
+msgstr "Добавлен новый отзыв"
+
+msgid "Date of publication"
+msgstr "Дата публикации"
+
+msgid "Answer"
+msgstr "Ответ"
+
+msgid "Actions"
+msgstr "Действия"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Not published"
+msgstr "Не опубликован"
+
+msgid "Published"
+msgstr "Опубликован"
+
+msgid "Add review"
+msgstr "Добавить отзыв"
+
+msgid "Lazyloading"
+msgstr "Ленивая загрузка"
+
+msgid "Use avatars from service gravatar.com"
+msgstr "Использование аватаров из сервиса gravatar.com"
+
+msgid "No photo"
+msgstr "Нет фото"
+
+msgid "Invalid Datetime"
+msgstr "Неверная дата"
+
+msgid "Use ajax form"
+msgstr "Использовать ajax для отправки данных"

@@ -141,7 +141,7 @@ class waContactInfoStorage extends waContactStorage
                 FROM wa_contact
                 WHERE `$field` IN (:values)".
                     ($excludeIds ? " AND id NOT IN (:excludeIds) " : ' ').
-                "GROUP BY f, id";
+                "GROUP BY f";
         $this->getModel();
         $r = $this->model->query($sql, array('values' => $values, 'excludeIds' => $excludeIds));
         return $r->fetchAll('f', true);

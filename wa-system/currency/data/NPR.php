@@ -3,7 +3,6 @@
 return array(
     'code' => 'NPR',
     'sign' => 'Rs.',
-	'iso4217' => '524',
     'sign_position' => 0,
     'sign_delim' => ' ',
     'title' => 'Nepalese rupee',

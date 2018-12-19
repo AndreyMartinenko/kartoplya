@@ -40,21 +40,6 @@ return array(
             'PRIMARY' => array('app_id', 'name'),
         ),
     ),
-    'wa_app_tokens' => array(
-        'contact_id' => array('int', 11),
-        'app_id' => array('varchar', 32, 'null' => 0),
-        'type' => array('varchar', 32, 'null' => 0),
-        'create_datetime' => array('datetime', 'null' => 0),
-        'expire_datetime' => array('datetime'),
-        'token' => array('varchar', 32, 'null' => 0),
-        'data' => array('text'),
-        ':keys' => array(
-            'token' => array('token', 'unique' => 1),
-            'app' => 'app_id',
-            'contact' => 'contact_id',
-            'expire' => 'expire_datetime',
-        ),
-    ),
     'wa_contact' => array(
         'id' => array('int', 11, 'null' => 0, 'autoincrement' => 1),
         'name' => array('varchar', 150, 'null' => 0),
@@ -89,17 +74,6 @@ return array(
             'id_name' => array('id', 'name'),
         ),
     ),
-    'wa_contact_calendars' => array(
-        'id' => array('int', 11, 'null' => 0, 'autoincrement' => 1),
-        'name' => array('varchar', 255, 'null' => 0),
-        'bg_color' => array('varchar', 7),
-        'font_color' => array('varchar', 7),
-        'sort' => array('int', 11, 'null' => 0, 'default' => '0'),
-        'is_limited' => array('tinyint', 1, 'null' => 0, 'default' => '0'),
-        ':keys' => array(
-            'PRIMARY' => 'id',
-        ),
-    ),
     'wa_contact_categories' => array(
         'category_id' => array('int', 11, 'null' => 0),
         'contact_id' => array('int', 11, 'null' => 0),
@@ -127,13 +101,6 @@ return array(
         'ext' => array('varchar', 32, 'null' => 0, 'default' => ''),
         'value' => array('varchar', 255, 'null' => 0),
         'sort' => array('int', 11, 'null' => 0, 'default' => '0'),
-
-        // Status need mostly for phones
-        // Status for phone likewise status for email may be 'confirmed','unconfirmed','unavailable'
-        // NULL available, cause there are fields do not need this
-        // varchar (not ENUM), cause there are other fields that may have some other statuses
-        'status' => array('varchar', 255, 'null' => 1),
-
         ':keys' => array(
             'PRIMARY' => 'id',
             'contact_field_sort' => array('contact_id', 'field', 'sort', 'unique' => 1),
@@ -168,28 +135,6 @@ return array(
             'contact_sort' => array('contact_id', 'sort', 'unique' => 1),
             'email' => 'email',
             'status' => 'status',
-        ),
-    ),
-    'wa_contact_events' => array(
-        'id' => array('int', 11, 'null' => 0, 'autoincrement' => 1),
-        'uid' => array('varchar', 255),
-        'create_datetime' => array('datetime', 'null' => 0),
-        'update_datetime' => array('datetime', 'null' => 0),
-        'contact_id' => array('int', 11, 'null' => 0),
-        'calendar_id' => array('int', 11, 'null' => 0),
-        'summary' => array('varchar', 255, 'null' => 0),
-        'description' => array('text'),
-        'location' => array('varchar', 255),
-        'start' => array('datetime', 'null' => 0),
-        'end' => array('datetime', 'null' => 0),
-        'is_allday' => array('tinyint', 4, 'null' => 0, 'default' => '0'),
-        'is_status' => array('tinyint', 4, 'null' => 0, 'default' => '0'),
-        'sequence' => array('int', 11, 'null' => 0, 'default' => '0'),
-        ':keys' => array(
-            'PRIMARY' => 'id',
-            'uid' => 'uid',
-            'contact_id' => 'contact_id',
-            'calendar_id' => 'calendar_id',
         ),
     ),
     'wa_contact_field_values' => array(
@@ -251,8 +196,6 @@ return array(
         'cnt' => array('int', 11, 'null' => 0, 'default' => '0'),
         'icon' => array('varchar', 255, 'null' => 1),
         'sort' => array('int', 11, 'null' => 1),
-        'type' => array('enum', "'group', 'location'", 'null' => 0, 'default' => 'group'),
-        'description' => array('text'),
         ':keys' => array(
             'PRIMARY' => 'id',
             'name' => 'name',
@@ -268,7 +211,6 @@ return array(
         'params' => array('text'),
         ':keys' => array(
             'PRIMARY' => 'id',
-            'contact' => array('contact_id', 'id'),
         ),
     ),
     'wa_login_log' => array(
@@ -276,10 +218,8 @@ return array(
         'contact_id' => array('int', 11, 'null' => 0),
         'datetime_in' => array('datetime', 'null' => 0),
         'datetime_out' => array('datetime'),
-        'ip' => array('varchar', 45),
         ':keys' => array(
             'PRIMARY' => 'id',
-            'contact_datetime' => array('contact_id', 'datetime_out')
         ),
     ),
     'wa_region' => array(
@@ -335,46 +275,10 @@ return array(
     'wa_user_groups' => array(
         'contact_id' => array('int', 11, 'null' => 0),
         'group_id' => array('int', 11, 'null' => 0),
-        'datetime' => array('datetime'),
         ':keys' => array(
             'PRIMARY' => array('contact_id', 'group_id'),
             'group_id' => 'group_id',
         ),
-    ),
-    'wa_verification_channel' => array(
-        'id' => array('int', 11, 'null' => 0, 'autoincrement' => 1),
-        'name' => array('varchar', 255, 'null' => 0),
-        'address' => array('varchar', 64, 'null' => 0),
-        'type' => array('varchar', 64, 'null' => 0),
-        'create_datetime' => array('datetime'),
-        'system' => array('int', 3, 'null' => 0),
-        ':keys' => array(
-            'PRIMARY' => 'id',
-            'address' => 'address'
-        )
-    ),
-    'wa_verification_channel_params' => array(
-        'channel_id' => array('int', 11, 'null' => 0),
-        'name' => array('varchar', 64, 'null' => 0),
-        'value' => array('text'),
-        ':keys' => array(
-            'PRIMARY' => array('channel_id', 'name')
-        )
-    ),
-    'wa_verification_channel_assets' => array(
-        'id' => array('int', 11, 'null' => 0, 'autoincrement' => 1),
-        'channel_id' => array('int', 11, 'null' => 0),
-        'address' => array('varchar', 64, 'null' => 0),
-        'contact_id' => array('int', 11, 'null' => 0, 'default' => 0),
-        'name' => array('varchar', 64, 'null' => 0),
-        'value' => array('text'),
-        'expires' => array('datetime'), // IF NULL asset never expires
-        ':keys' => array(
-            'PRIMARY' => 'id',
-            'channel_address_name' => array('channel_id', 'address', 'contact_id', 'name', 'unique' => 1),
-            'name' => 'name',
-            'expires' => 'expires'
-        )
     ),
     'wa_widget' => array(
         'id' => array('int', 11, 'null' => 0, 'autoincrement' => 1),
@@ -397,16 +301,6 @@ return array(
         'value' => array('text', 'null' => 0),
         ':keys' => array(
             'PRIMARY' => array('widget_id', 'name'),
-        ),
-    ),
-    'wa_cache' => array(
-        'id'      => array('bigint', 20, 'null' => 0, 'autoincrement' => 1),
-        'name'    => array('varchar', 255, 'null' => 0),
-        'expires' => array('datetime', 'null' => 0),
-        ':keys'   => array(
-            'PRIMARY' => 'id',
-            'name'    => array('name', 'unique' => 1),
-            'expires' => 'expires',
         ),
     ),
 );

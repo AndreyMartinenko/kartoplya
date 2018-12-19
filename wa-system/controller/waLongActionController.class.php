@@ -74,8 +74,6 @@
  * @property array $data
  * @property-read resource $fd
  * @property-read boolean $newProcess
- * @property-read int $current_exec_time    since 1.8.2
- * @property-read int $remaining_exec_time  since 1.8.2
  * @property-read int $max_exec_time
  * @property-read int $isRunner
  */
@@ -227,14 +225,6 @@ abstract class waLongActionController extends waController
         ),
         'flock_ok' => '', // this file exists if we're sure that flock works in this system.
     );
-
-    /**
-     * Contains microtime of start of current script run.
-     * Used to calculate $this->current_exec_time and $this->remaining_exec_time
-     * @since 1.8.2
-     * @var float
-     */
-    private $_start_time = 0.0;
 
     /**
      * Contains microtime and resets on start of the Runner and on each save() that writes to disk.
@@ -806,12 +796,6 @@ abstract class waLongActionController extends waController
             case 'max_exec_time':
                 $np = $this->_max_exec_time;
                 return $np; // not by reference
-            case 'current_exec_time':
-                $np = microtime(true) - $this->_start_time;
-                return $np; // not by reference
-            case 'remaining_exec_time':
-                $np = $this->_max_exec_time - (microtime(true) - $this->_start_time);
-                return $np; // not by reference
             default:
                 throw new waException('Unknown property: '.$field);
         }
@@ -884,21 +868,22 @@ abstract class waLongActionController extends waController
 
     protected function initEnv()
     {
-        $this->_start_time = microtime(true);
-
-        // We'll try to increase execution time limit.
-        // It doesn't always work, but it doesn't hurt either.
-        // (Less than 5 minutes - common timeout for nginx)
-        @set_time_limit(287);
-
         // How much time we can safely run?
         $this->_max_exec_time = ini_get('max_execution_time');
         if ($this->_max_exec_time <= 0) {
-            $this->_max_exec_time = 300;
+            $this->_max_exec_time = false;
         }
 
+        // We'll try to disable execution time limit.
+        // It doesn't always work, but it doesn't hurt either.
+        @set_time_limit(900);
+
         // Depending on total time limit, determine how often we'd like to write data to file.
-        $this->_chunk_time = min(9, $this->_max_exec_time / 6);
+        if ($this->_max_exec_time) {
+            $this->_chunk_time = min(10, $this->_max_exec_time / 6);
+        } else {
+            $this->_chunk_time = 7;
+        }
     }
 }
 

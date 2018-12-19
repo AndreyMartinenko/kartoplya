@@ -25,8 +25,7 @@
  * @property string $type
  * @property int $size
  * @property string $tmp_name
- * @property string $error Error description
- * @property int $error_code UPLOAD_ERR_* constant
+ * @property string $error
  * @property string $extension
  */
 class waRequestFile
@@ -51,26 +50,13 @@ class waRequestFile
             $this->data = null;
             return;
         }
-        foreach ($this->data as $k => $v) {
+        foreach($this->data as $k => $v) {
             if (!isset($data[$k])) {
                 throw new waException("Key {$k} must be set.");
             }
         }
         $this->skip_uploaded_check = $skip_uploaded_check;
         $this->setData($data['name'], $data['type'], $data['size'], $data['tmp_name'], $data['error']);
-    }
-
-    public function transliterateFilename()
-    {
-        if (empty($this->data)) {
-            return;
-        }
-        $filename = $this->data['name'];
-        $filename = preg_replace('/\s+/u', '-', $filename);
-        $filename = waLocale::transliterate($filename);
-        $filename = preg_replace('/[^a-zA-Z0-9._-]+/', '', $filename);
-        $filename = strtolower($filename);
-        $this->data['name'] = $filename;
     }
 
     public function uploaded()
@@ -107,13 +93,8 @@ class waRequestFile
         }
     }
 
-    /**
-     * @param string $dir
-     * @param string $name When 2-nd parameter is omitted, first one is considered to be full path
-     * @return bool
-     * @throws waException
-     */
-    public function copyTo($dir, $name = null)
+    /** When 2-nd parameter is omitted, first one is considered to be full path */
+    public function copyTo($dir, $name=null)
     {
         return @copy($this->data['tmp_name'], $this->concatFullPath($dir, $name));
     }
@@ -188,17 +169,16 @@ class waRequestFile
             }
             if (!$this->skip_uploaded_check && !is_uploaded_file($tmp_name)) {
                 throw new waException('Possible file upload attack: '.$tmp_name);
-            } elseif ($this->skip_uploaded_check && !file_exists($tmp_name)) {
+            } else if ($this->skip_uploaded_check && !file_exists($tmp_name)) {
                 throw new waException('No such file ($tmp_name): '.$tmp_name);
             }
         }
-
         $this->data = array(
-            'name'     => $name,
-            'type'     => $type,
-            'size'     => $size,
+            'name' => $name,
+            'type' => $type,
+            'size' => $size,
             'tmp_name' => $tmp_name,
-            'error'    => $error,
+            'error' => $error,
         );
     }
 
@@ -233,7 +213,6 @@ class waRequestFile
      * @param string $dir - directory
      * @param string $name - name of the file
      * @return string - full path
-     * @throws waException
      */
     protected function concatFullPath($dir, $name)
     {
@@ -243,7 +222,7 @@ class waRequestFile
 
         if (!$this->skip_uploaded_check && !is_uploaded_file($this->data['tmp_name'])) {
             throw new waException('Temporary file does not exist anymore.');
-        } elseif ($this->skip_uploaded_check && !file_exists($this->data['tmp_name'])) {
+        } else if ($this->skip_uploaded_check && !file_exists($this->data['tmp_name'])) {
             throw new waException('Temporary file does not exist anymore.');
         }
 

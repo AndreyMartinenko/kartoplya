@@ -15,7 +15,5 @@ return array(
     'csrf'      => true,
     'plugins'   => true,
     'frontend'  => true,
-    'routing_params' => array(
-        'private' => true,
-    ),
+    'routing_params' => array('private' => true,),
 );

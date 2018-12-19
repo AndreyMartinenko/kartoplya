@@ -3,18 +3,6 @@
 
 <div class="sidebar left250px s-internal-sidebar"{if !$auth_enabled} style="overflow:hidden; width: 0"{/if}>
     <div class="block not-padded">
-        <ul class="menu-v with-icons s-personal-auth stack">
-            <li class="js-personal-auth">
-                <a href="#/personal/settings/"{if $auth_enabled} data-enabled="1"{/if}>
-                    <i class="icon16 access"></i>
-                    [`Login and signup settings`]
-                </a>
-            </li>
-        </ul>
-
-        <div class="s-sections-label">
-            [`Personal account sections`]
-        </div>
 
         {foreach $apps as $key => $key_apps}
         <ul id="apps-{$key}" class="menu-v with-icons s-personal-structure stack">
@@ -44,12 +32,12 @@
             </li>
         </ul>
 
-        <div class="block double-padded">
+        <div class="block double-padded align-center">
             <p class="hint">
-                [`Sections are determined by connected applications.`]
+                [`Personal account structure is defined by the list of installed Webasyst apps linked in the current website frontend.`]
             </p>
-            <p class="hint">
-                [`Read <a href="https://support.webasyst.com/29298/site-auth-settings/" target="_blank">user manual</a>.`]
+            <p class="small">
+                <a id="s-personal-settings-link" {if $auth_enabled}data-enabled="1"{/if} href="#/personal/settings/" class="no-underline"><i class="icon10 settings"></i> <strong>[`Auth &amp; Sign Up settings`]</strong></a>
             </p>
         </div>
     </div>
@@ -57,8 +45,8 @@
 
 <div class="content left250px"{if !$auth_enabled} style="margin-left: 0"{/if}>
     <div class="s-editor s-white bordered-left">
-        <div class="s-personal" id="s-personal-content">
-            <i class="icon16 loading s-personal-loading"></i>
+        <div class="block double-padded s-personal" id="s-personal-content">
+            <i class="icon16 loading"></i>
         </div>
         <div class="clear-both"></div>
     </div>
@@ -84,7 +72,7 @@
             var apps = [];
             $('#apps-enabled li').each(function () {
                 apps.push($(this).data('app'));
-            });
+            })
             $.post("?module=personal&action=appMove&domain_id={$domain_id}" , { apps: apps}, function () {
             }, "json");
         }

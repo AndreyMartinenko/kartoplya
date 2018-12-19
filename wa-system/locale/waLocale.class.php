@@ -17,7 +17,7 @@ class waLocale
     protected static $locale;
     protected static $domain;
     /**
-     * @var waiLocaleAdapter
+     * @var waLocaleAdapter
      */
     public static $adapter;
 
@@ -38,12 +38,10 @@ class waLocale
             self::$init = true;
             // Alias to gettext
 
-            if ($adapter) {
-                self::$adapter = $adapter;
-            } else if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' || !function_exists('gettext')) {
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' || !function_exists('gettext')) {
                 self::$adapter = new waLocalePHPAdapter();
             } else {
-                self::$adapter = new waLocaleAdapter();
+                self::$adapter = $adapter ? $adapter :  new waLocaleAdapter();
             }
         }
     }
@@ -84,7 +82,6 @@ class waLocale
         // load old locale
         if ($old_locale) {
             self::$locale = $old_locale;
-            //unset(self::$loaded[$old_locale][$domain]);
             self::loadByDomain($domain, $old_locale);
         }
         return $result;
@@ -102,7 +99,8 @@ class waLocale
             $locale_path = waSystem::getInstance()->getAppPath('locale', $domain);
         }
         if (isset(self::$loaded[$locale][$domain])) {
-            return;
+//            todo: do something
+//            return;
         }
         if (file_exists($locale_path)) {
             self::load($locale, $locale_path, $domain, false);
@@ -112,7 +110,7 @@ class waLocale
     /**
      * Returns locale adapter
      *
-     * @return waiLocaleAdapter
+     * @return waLocaleAdapter|waLocalePHPAdapter
      */
     public static function getAdapter()
     {
@@ -179,7 +177,7 @@ class waLocale
             $decimals = $locale_info['frac_digits'];
         }
 
-        return number_format($n, $decimals, ifset($locale_info, 'decimal_point', '.'), ifset($locale_info, 'thousands_sep', ''));
+        return number_format($n, $decimals, $locale_info['decimal_point'], $locale_info['thousands_sep']);
     }
 
     /**
@@ -430,13 +428,8 @@ function _wd($domain, $msgid1, $msgid2 = null, $n = null, $sprintf = true)
 function _wp($msgid1, $msgid2 = null, $n = null, $sprintf = true)
 {
     if ($domain = wa()->getActiveLocaleDomain()) {
-        $result = _wd($domain, $msgid1, $msgid2, $n, $sprintf);
+        return _wd($domain, $msgid1, $msgid2, $n, $sprintf);
+    } else {
+        return _w($msgid1, $msgid2, $n, $sprintf);
     }
-    if (!$domain || $result === $msgid1) {
-        $result = _w($msgid1, $msgid2, $n, $sprintf);
-    }
-    if ($result === $msgid1) {
-        $result = _ws($msgid1, $msgid2, $n, $sprintf);
-    }
-    return $result;
 }

@@ -53,11 +53,10 @@ abstract class waAppPayment implements waiPluginApp
      *
      * Callback method handler for plugin
      * @param string $method one of Confirmation, Payment
-     * @param mixed $_ [optional] params, passed to apps
      * @throws waException
      * @return mixed
      */
-    final public function execCallbackHandler($method, $_ = null)
+    final public function execCallbackHandler($method)
     {
         $args = func_get_args();
         array_shift($args);
@@ -137,20 +136,6 @@ abstract class waAppPayment implements waiPluginApp
     {
         $plugin = waPayment::factory($module_id, $merchant_id, $this);
         return call_user_func_array(array($plugin, $transaction), $params);
-    }
-
-    /**
-     * @param $name string
-     * @return mixed
-     */
-    public function getAppProperties($name = null)
-    {
-        $info = wa()->getAppInfo($this->app_id);
-        $properties = ifset($info['payment_plugins']);
-        if (!is_array($properties)) {
-            $properties = array();
-        }
-        return $name ? ifset($properties[$name]) : $properties;
     }
 
     /**

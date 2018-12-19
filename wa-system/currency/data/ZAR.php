@@ -3,7 +3,6 @@
 return array(
     'code' => 'ZAR',
     'sign' => 'R',
-	'iso4217' => '710',
     'sign_position' => 0,
     'sign_delim' => '',
     'title' => 'South African rand',

@@ -85,14 +85,16 @@ class waModel
     public function getMetadata()
     {
         if ($this->table && !$this->fields) {
-            $runtime_cache = new waRuntimeCache('db/'.$this->type.'/'.$this->table, -1, 'webasyst');
+            $runtime_cache = new waRuntimeCache('db/'.$this->table);
+            // var_dump($runtime_cache);
+            
             if ($this->fields = $runtime_cache->get()) {
                 return $this->fields;
             }
             if (SystemConfig::isDebug()) {
                 $this->fields = $this->getFields();
             } else {
-                $cache = new waSystemCache('db/'.$this->type.'/'.$this->table, -1, 'webasyst');
+                $cache = new waSystemCache('db/'.$this->table);
                 if (!($this->fields = $cache->get())) {
                     $this->fields = $this->getFields();
                     $cache->set($this->fields);
@@ -101,20 +103,6 @@ class waModel
             $runtime_cache->set($this->fields);
         }
         return $this->fields;
-    }
-
-    /**
-     * Update and return description of table columns (like getMetadata()), bypassing all caches.
-     * @return array
-     */
-    public function clearMetadataCache()
-    {
-        $runtime_cache = new waRuntimeCache('db/'.$this->type.'/'.$this->table, -1, 'webasyst');
-        $runtime_cache->delete();
-        $cache = new waSystemCache('db/'.$this->type.'/'.$this->table, -1, 'webasyst');
-        $cache->delete();
-        $this->fields = null;
-        return $this->getMetadata();
     }
 
     /**
@@ -248,14 +236,23 @@ class waModel
         $sql = trim($sql);
         $result = $this->adapter->query($sql);
         if (!$result) {
-            $error = sprintf(
-                "Query Error %d: %s\nQuery: %s",
-                $this->adapter->errorCode(),
-                $this->adapter->error(),
-                $sql
-            );
+            $error = "Query Error\nQuery: ".$sql.
+                     "\nError: ".$this->adapter->errorCode().
+                     "\nMessage: ".$this->adapter->error();
+            $trace = debug_backtrace();
+            $stack = "";
+            $default = array('file' => 'n/a', 'line' => 'n/a');
+            foreach ($trace as $i => $row) {
+                $row = array_merge($row, $default);
+                $stack .= $i.". ".$row['file'].":".$row['line']."\n".
+                     (isset($row['class']) ? $row['class'] : '').
+                     (isset($row['type']) ? $row['type'] : '').
+                     $row['function']."()\n";
+            }
+            waLog::log($error."\nStack:\n".$stack, 'db.log');
             throw new waDbException($error, $this->adapter->errorCode());
         }
+
         return $result;
     }
 
@@ -296,7 +293,7 @@ class waModel
         }
         $waDbQueryAnalyzer = new waDbQueryAnalyzer($sql);
         switch ($waDbQueryAnalyzer->getQueryType()) {
-            case 'update': case 'replace': case 'delete': case 'drop': case 'insert': $this->cleanCache();
+            case 'update': case 'replace': case 'delete': case 'insert': $this->cleanCache();
         }
 
         if (func_num_args() > 2) {
@@ -360,7 +357,7 @@ class waModel
     /**
      * Updates table record with specified value of model's id field value.
      *
-     * @param string|int $id The value of model's id field, which is searched for across all table records to replace
+     * @param string $id The value of model's id field, which is searched for across all table records to replace
      *     values of fields specified in $data parameter in the found record.
      * @param array $data Associative array of new values for specified fields of the found record.
      * @param string $options Optional key words for SQL query UPDATE: LOW_PRIORITY or IGNORE.
@@ -387,7 +384,7 @@ class waModel
      *
      * @param string|array $field (single field) Name of the table field whose value needs to be updated.
      *     (multiple fields) Associative array of table fields by whose values table records must be searched.
-     * @param string|array $value (single field) Existing value of the specified field, which needs to be replaced with a new
+     * @param string $value (single field) Existing value of the specified field, which needs to be replaced with a new
      *     value. Instead of one searched value, you may specify an array; in this case the specified field is updated
      *     for all records where field's value matches one of array items.
      * @param array $data Associative array of new values to be updated for found records.
@@ -425,7 +422,7 @@ class waModel
             }
         }
 
-        if ($values) {
+        if ($values && $where) {
             $sql = "UPDATE ".($options ? $options." " : "").$this->table."
                    SET ".implode(", ", $values)."
                    WHERE ".$where;
@@ -468,11 +465,6 @@ class waModel
     protected function getFieldValue($field, $value)
     {
         if (!isset($this->fields[$field])) {
-            // Make sure it's not the cache problem. Someone might have added
-            // a new column to the table, but forgot to clear cache.
-            $this->clearMetadataCache();
-        }
-        if (!isset($this->fields[$field])) {
             throw new waException(sprintf('Unknown field %s', $field));
         }
         if (!isset($this->fields[$field]['type'])) {
@@ -481,9 +473,6 @@ class waModel
         $type = strtolower($this->fields[$field]['type']);
         if ($value === null && (!isset($this->fields[$field]['null']) || $this->fields[$field]['null'])) {
             return 'NULL';
-        }
-        if ($type == 'varchar' && !is_array($value) && !is_object($value)) {
-            $value = mb_substr((string)$value, 0, $this->fields[$field]['params']);
         }
 
         return $this->castValue($type, $value, !isset($this->fields[$field]['null']) || $this->fields[$field]['null']);
@@ -505,11 +494,7 @@ class waModel
             case 'tinyint':
             case 'int':
             case 'integer':
-                if (wa_is_int($value)) {
-                    return "'".$this->escape($value, 'int')."'";
-                } else {
-                    return (int) $value;
-                }
+                return (int) $value;
             case 'decimal':
             case 'double':
             case 'float':
@@ -625,7 +610,6 @@ class waModel
      * );</pre>
      *
      * @return resource|bool Returns true if there are no data to be inserted.
-     * @throws waException
      */
     public function multipleInsert($data)
     {
@@ -752,31 +736,30 @@ class waModel
     }
 
     /**
-     * Make a string safe to use inside single quotes in SQL statement.
+     * Escape data
      *
      * @param mixed $data
      * @param string $type - int|like
-     * @return string|array
+     * @return string
      */
     public function escape($data, $type = null)
     {
         if (is_array($data)) {
             foreach ($data as $key => $value) {
-                if (is_array($value)) {
-                    $value = '';
+                if ($type === 'int') {
+                    $data[$key] = (int) $value;
+                } elseif ($type === 'like') {
+                    $value = str_replace('\\', '\\\\', $value);
+                    $data[$key] = str_replace(array('%', '_'), array('\%', '\_'), $this->adapter->escape($value));
+                } else {
+                    $data[$key] = $this->adapter->escape($value);
                 }
-                $data[$key] = $this->escape($value, $type);
             }
             return $data;
         }
-
         switch ($type) {
             case 'int':
-                if (wa_is_int($data)) {
-                    return $this->adapter->escape((string)$data);
-                } else {
-                    return (int) (string) $data;
-                }
+                return (int) $data;
             case 'like':
                 $data = str_replace('\\', '\\\\', $data);
                 return str_replace(array('%', '_'), array('\%', '\_'), $this->adapter->escape($data));
@@ -838,34 +821,15 @@ class waModel
 
     /**
      * Returns data from table records containing specified values of specified fields.
-     * Supports 2 modes of passing parameters: to search records by one or by multiple fields.
+     * Method accepts 2 modes of passing parameters: for one value and for multiple values.
      *
-     * @param string|array $field
-     * @param mixed|array|bool $value
-     * @param bool|string|int $all
-     * @param bool $limit
-     * @return array|null
-     * @throws waException
-     *
-     * One field mode:
-     *
-     * @param string Field name.
-     * @param mixed|array Field value or zero-based array of values.
-     * @param bool|string Boolean flag requiring to return data of all found records
-     *     or name of field whose values in all found entries must be used as keys of result array.
-     *     If false is provided, method returns values only from the first found table record.
-     * @param int|bool Maximum number of records to be returned if all records are requested.
-     *     By default (false) no limitation is applied.
-     *
-     * Multiple fields mode:
-     *
-     * @param array Associative array of field values with field names as keys.
-     * @param bool Boolean flag requiring to return data of all found records
-     *     or name of field whose values in all found entries must be used as keys of result array.
-     *     If false is provided, method returns values only from the first found table record.
-     * @param int|bool Maximum number of records to be returned if all records are requested.
-     *     By default (false) no limitation is applied.
-     *
+     * @param string|array $field (one field) Field name
+     *     (multiple fields) or associative array with field names as keys
+     * @param mixed|array|bool $value (one field) Field value or array of values
+     *     (multiple fields) or Boolean flag requiring to return data from all found records. By default (false),
+     *     only first found record is returned.
+     * @param bool $all (one field) Boolean flag requiring to return data of all found records.
+     * @param int|bool $limit (one field) Number of records to be returned. By default (false) this limitation is disabled.
      * @return array|null
      */
     public function getByField($field, $value = null, $all = false, $limit = false)
@@ -876,7 +840,10 @@ class waModel
             $value = false;
         }
         $sql = "SELECT * FROM ".$this->table;
-        $sql .= " WHERE ".$this->getWhereByField($field, $value);
+        $where = $this->getWhereByField($field, $value);
+        if ($where != '') {
+            $sql .= " WHERE ".$where;
+        }
         if ($limit) {
             $sql .= " LIMIT ".(int) $limit;
         } elseif (!$all) {
@@ -909,19 +876,10 @@ class waModel
 
             $where = array();
             foreach ($field as $f => $v) {
-                $cond = $this->getWhereByField($f, $v, $add_table_name);
-                if ($cond === '1=0') {
-                    return '1=0';
-                } else if ($cond !== '1=1') {
-                    $where[] = $cond;
-                }
+                $where[] = $this->getWhereByField($f, $v, $add_table_name);
             }
 
-            if ($where) {
-                return implode(" AND ", $where);
-            } else {
-                return '1=1';
-            }
+            return implode(" AND ", $where);
         }
 
         // Table prefix for field names
@@ -934,17 +892,13 @@ class waModel
         // Single field, multiple values?
         if (is_array($value)) {
             if (!isset($this->fields[$field])) {
-                // Make sure it's not the cache problem. Someone might have added
-                // a new column to the table, but forgot to clear cache.
-                $this->clearMetadataCache();
-            }
-            if (!isset($this->fields[$field])) {
                 throw new waException(sprintf(_ws('Unknown field %s'), $field));
             }
             if ($value) {
                 return $prefix.$this->escapeField($field)." IN ('".implode("','", $this->escape($value))."')";
             } else {
-                return '1=0';
+                // analog field IN ('') - it's always false
+                return '0';
             }
         }
 
@@ -956,16 +910,16 @@ class waModel
     /**
      * Returns the number of records with the value of the specified field matching the specified value.
      *
-     * @param string|array $field Name of field to be checked
+     * @param string $field Name of field to be checked
      * @param string $value Value to be checked in the specified field of all table records
      * @return int
-     *
-     * @throws waException
      */
     public function countByField($field, $value = null)
     {
         $sql = "SELECT COUNT(*) FROM ".$this->table;
-        $sql .= " WHERE ".$this->getWhereByField($field, $value);
+        if ($where = $this->getWhereByField($field, $value)) {
+            $sql .= " WHERE ".$where;
+        }
         return $this->query($sql)->fetchField();
     }
 
@@ -996,26 +950,17 @@ class waModel
      */
     public function deleteByField($field, $value = null)
     {
-        $sql = "DELETE FROM ".$this->table." WHERE ".$this->getWhereByField($field, $value);
-        return $this->exec($sql);
-    }
-
-    /** Truncates the table, deleting all rows. */
-    public function truncate()
-    {
-        try {
-            $this->exec("TRUNCATE {$this->table}");
-        } catch (Exception $e) {
-            // DB user does not have enough rights for TRUNCATE.
-            // Fall back to DELETE. Slow but sure.
-            $this->exec("DELETE FROM {$this->table}");
+        if ($where = $this->getWhereByField($field, $value)) {
+            $sql = "DELETE FROM ".$this->table." WHERE ".$where;
+            return $this->exec($sql);
         }
+        return true;
     }
 
     /**
      * Prepare query and returns object of waDbStatement
      *
-     * @param string $sql query
+     * @param string $sql - запрос
      * @return waDbStatement
      */
     public function prepare($sql)

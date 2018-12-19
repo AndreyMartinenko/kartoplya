@@ -20,7 +20,7 @@ class siteLoginAction extends waLoginAction
         }
     }
 
-    protected function redirectAfterAuth()
+    protected function afterAuth()
     {
         if (waRequest::get('return')) {
             $url = $this->getStorage()->get('auth_referer');
